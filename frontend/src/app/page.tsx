@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Container, Title, Stack, Paper, Group, ActionIcon, Text, Divider } from '@mantine/core';
 import { IconSun, IconMoon } from '@tabler/icons-react';
 import { useMantineColorScheme } from '@mantine/core';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTodos } from '@/hooks/useTodos';
 import { AddTodo } from '@/components/AddTodo';
 import { TodoItem } from '@/components/TodoItem';
@@ -47,16 +48,40 @@ export default function Home() {
                 No tasks yet. Add one above!
               </Text>
             ) : (
-              todos.map((todo, index) => (
-                <div key={todo.id}>
-                  <TodoItem
-                    todo={todo}
-                    onToggle={toggleTodo}
-                    onDelete={deleteTodo}
-                  />
-                  {index < todos.length - 1 && <Divider my="sm" />}
-                </div>
-              ))
+              (() => {
+                const incompleteTasks = todos.filter(todo => !todo.completed);
+                const completedTasks = todos
+                  .filter(todo => todo.completed)
+                  .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+                const allTasks = [...incompleteTasks, ...completedTasks];
+                
+                return (
+                  <AnimatePresence>
+                    {allTasks.map((todo, index) => (
+                      <motion.div
+                        key={todo.id}
+                        layout
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -300 }}
+                        transition={{ 
+                          layout: { duration: 0.3 },
+                          opacity: { duration: 0.2 },
+                          y: { duration: 0.2 },
+                          x: { duration: 0.2 }
+                        }}
+                      >
+                        <TodoItem
+                          todo={todo}
+                          onToggle={toggleTodo}
+                          onDelete={deleteTodo}
+                        />
+                        {index < allTasks.length - 1 && <Divider my="sm" />}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                );
+              })()
             )}
           </Stack>
         </Paper>

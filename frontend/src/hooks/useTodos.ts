@@ -43,11 +43,24 @@ export function useTodos() {
   }, []);
 
   const toggleTodo = useCallback((id: string) => {
-    setTodos(prev => 
-      prev.map(todo => 
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
+    setTodos(prev => {
+      const updatedTodos = prev.map(todo => 
+        todo.id === id ? { 
+          ...todo, 
+          completed: !todo.completed,
+          completedAt: !todo.completed ? Date.now() : undefined
+        } : todo
+      );
+      
+      // If task was uncompleted (marked as incomplete), move to top
+      const toggledTodo = updatedTodos.find(todo => todo.id === id);
+      if (toggledTodo && !toggledTodo.completed) {
+        const otherTodos = updatedTodos.filter(todo => todo.id !== id);
+        return [toggledTodo, ...otherTodos];
+      }
+      
+      return updatedTodos;
+    });
   }, []);
 
   const deleteTodo = useCallback((id: string) => {
