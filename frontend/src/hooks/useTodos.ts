@@ -11,7 +11,13 @@ export function useTodos() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setTodos(JSON.parse(stored));
+        const loadedTodos = JSON.parse(stored);
+        // Migrate existing todos to have deleted field
+        const migratedTodos = loadedTodos.map((todo: Todo) => ({
+          ...todo,
+          deleted: todo.deleted || false,
+        }));
+        setTodos(migratedTodos);
       }
     } catch (error) {
       console.error('Failed to load todos from localStorage:', error);
@@ -38,6 +44,7 @@ export function useTodos() {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       text: trimmedText,
       completed: false,
+      deleted: false,
     };
     setTodos(prev => [newTodo, ...prev]);
   }, []);
@@ -64,7 +71,42 @@ export function useTodos() {
   }, []);
 
   const deleteTodo = useCallback((id: string) => {
+    setTodos(prev => prev.map(todo => 
+      todo.id === id ? { 
+        ...todo, 
+        deleted: true, 
+        deletedAt: Date.now() 
+      } : todo
+    ));
+  }, []);
+
+  const restoreTodo = useCallback((id: string) => {
+    setTodos(prev => {
+      const updatedTodos = prev.map(todo => 
+        todo.id === id ? { 
+          ...todo, 
+          deleted: false, 
+          deletedAt: undefined 
+        } : todo
+      );
+      
+      // Move restored incomplete tasks to top, like uncompleted tasks
+      const restoredTodo = updatedTodos.find(todo => todo.id === id);
+      if (restoredTodo && !restoredTodo.completed) {
+        const otherTodos = updatedTodos.filter(todo => todo.id !== id);
+        return [restoredTodo, ...otherTodos];
+      }
+      
+      return updatedTodos;
+    });
+  }, []);
+
+  const permanentDeleteTodo = useCallback((id: string) => {
     setTodos(prev => prev.filter(todo => todo.id !== id));
+  }, []);
+
+  const permanentDeleteAllDeleted = useCallback(() => {
+    setTodos(prev => prev.filter(todo => !todo.deleted));
   }, []);
 
   return {
@@ -72,5 +114,8 @@ export function useTodos() {
     addTodo,
     toggleTodo,
     deleteTodo,
+    restoreTodo,
+    permanentDeleteTodo,
+    permanentDeleteAllDeleted,
   };
 }

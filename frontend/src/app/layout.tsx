@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MantineProvider, ColorSchemeScript, createTheme } from "@mantine/core";
+import { ModalsProvider } from "@mantine/modals";
 import { Montserrat } from "next/font/google";
 import "@mantine/core/styles.css";
 import "./globals.css";
@@ -48,7 +49,9 @@ export default function RootLayout({
       </head>
       <body className={montserrat.className}>
         <MantineProvider theme={theme} defaultColorScheme="light">
-          {children}
+          <ModalsProvider>
+            {children}
+          </ModalsProvider>
         </MantineProvider>
       </body>
     </html>
