@@ -110,8 +110,8 @@ test.describe('TaskFlow App', () => {
     await page.getByPlaceholder('Add a new task...').fill(task2);
     await page.getByRole('button', { name: 'Add' }).click();
     
-    // Complete the first task
-    await page.getByRole('checkbox').first().check();
+    // Complete task1 (it's now the second checkbox since task2 was added to top)
+    await page.getByRole('checkbox').nth(1).check();
     
     // Wait for animation
     await page.waitForTimeout(500);
@@ -145,14 +145,15 @@ test.describe('TaskFlow App', () => {
     await page.getByPlaceholder('Add a new task...').fill(task3);
     await page.getByRole('button', { name: 'Add' }).click();
     
-    // Complete tasks in order (first, second, third)
-    await page.getByRole('checkbox').nth(0).check();
+    // Complete tasks in order (task1, task2, task3)
+    // With new ordering: task3 (idx 0), task2 (idx 1), task1 (idx 2)
+    await page.getByRole('checkbox').nth(2).check(); // Complete task1
     await page.waitForTimeout(100);
     
-    await page.getByRole('checkbox').nth(0).check(); // Second task is now first
+    await page.getByRole('checkbox').nth(1).check(); // Complete task2
     await page.waitForTimeout(100);
     
-    await page.getByRole('checkbox').nth(0).check(); // Third task is now first
+    await page.getByRole('checkbox').nth(0).check(); // Complete task3
     await page.waitForTimeout(500);
     
     // Verify all tasks are completed (have line-through)

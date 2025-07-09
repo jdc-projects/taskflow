@@ -39,7 +39,7 @@ export function useTodos() {
       text: trimmedText,
       completed: false,
     };
-    setTodos(prev => [...prev, newTodo]);
+    setTodos(prev => [newTodo, ...prev]);
   }, []);
 
   const toggleTodo = useCallback((id: string) => {
