@@ -22,10 +22,42 @@ export default function Home() {
   } = useTodos();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [mounted, setMounted] = useState(false);
+  
+  // Persistent collapse state
+  const [collapseStates, setCollapseStates] = useState({
+    active: true,
+    completed: false,
+    deleted: false
+  });
 
   useEffect(() => {
     setMounted(true);
+    
+    // Load collapse states from localStorage
+    try {
+      const stored = localStorage.getItem('taskflow-collapse-states');
+      if (stored) {
+        const loadedStates = JSON.parse(stored);
+        setCollapseStates(prevStates => ({
+          ...prevStates,
+          ...loadedStates
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to load collapse states from localStorage:', error);
+    }
   }, []);
+  
+  // Save collapse states to localStorage whenever they change
+  useEffect(() => {
+    if (mounted) {
+      try {
+        localStorage.setItem('taskflow-collapse-states', JSON.stringify(collapseStates));
+      } catch (error) {
+        console.error('Failed to save collapse states to localStorage:', error);
+      }
+    }
+  }, [collapseStates, mounted]);
 
 
   // Single animation duration for consistency
@@ -45,6 +77,19 @@ export default function Home() {
     .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
   const deletedTasks = todos.filter(todo => todo.deleted)
     .sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0));
+  
+  // Toggle functions for each section
+  const toggleActiveSection = () => {
+    setCollapseStates(prev => ({ ...prev, active: !prev.active }));
+  };
+  
+  const toggleCompletedSection = () => {
+    setCollapseStates(prev => ({ ...prev, completed: !prev.completed }));
+  };
+  
+  const toggleDeletedSection = () => {
+    setCollapseStates(prev => ({ ...prev, deleted: !prev.deleted }));
+  };
 
   if (!mounted) {
     return null;
@@ -71,18 +116,21 @@ export default function Home() {
         
         <LayoutGroup>
           <Stack gap="md">
-            {/* Incomplete Tasks */}
+            {/* Active Tasks */}
             <motion.div 
               layout
               transition={{ type: "spring", bounce: 0, duration: animationDuration }}
             >
               <Paper withBorder p="md" radius="md">
-                <Stack gap={0}>
-                  {incompleteTasks.length === 0 ? (
-                    <Text ta="center" c="dimmed" p="xl" fw={500}>
-                      No tasks yet. Add one above!
-                    </Text>
-                  ) : (
+                <CollapsibleSection
+                  title="Active"
+                  count={incompleteTasks.length}
+                  data-testid="active-section"
+                  emptyMessage="No tasks yet. Add one above!"
+                  onToggle={toggleActiveSection}
+                  initialOpen={collapseStates.active}
+                >
+                  <Stack gap={0}>
                     <AnimatePresence>
                       {incompleteTasks.map((todo, index) => (
                         <motion.div
@@ -99,8 +147,8 @@ export default function Home() {
                         </motion.div>
                       ))}
                     </AnimatePresence>
-                  )}
-                </Stack>
+                  </Stack>
+                </CollapsibleSection>
               </Paper>
             </motion.div>
 
@@ -115,8 +163,8 @@ export default function Home() {
                   count={completedTasks.length}
                   data-testid="completed-section"
                   emptyMessage="No completed tasks yet"
-                  onToggle={() => {}}
-                  initialOpen={false}
+                  onToggle={toggleCompletedSection}
+                  initialOpen={collapseStates.completed}
                 >
                   <Stack gap={0}>
                     <AnimatePresence>
@@ -152,8 +200,8 @@ export default function Home() {
                   showBulkDelete={true}
                   onBulkDelete={permanentDeleteAllDeleted}
                   emptyMessage="No deleted tasks"
-                  onToggle={() => {}}
-                  initialOpen={false}
+                  onToggle={toggleDeletedSection}
+                  initialOpen={collapseStates.deleted}
                 >
                   <Stack gap={0}>
                     <AnimatePresence>
