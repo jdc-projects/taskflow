@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, waitForAnimations, expandSection, getDeleteButton, getRestoreButton, getPermanentDeleteButton, TEST_TASKS } from './test-utils';
+import { navigateToApp, addTask, waitForAnimations, expandSection, getDeleteButton, getRestoreButton, getPermanentDeleteButton, TEST_TASKS, expectSectionCounts, completeTask, deleteTask } from './test-utils';
 
 test.describe('TaskFlow App - Section State During Operations', () => {
   test.beforeEach(async ({ page }) => {
@@ -11,25 +11,22 @@ test.describe('TaskFlow App - Section State During Operations', () => {
     await addTask(page, TEST_TASKS.first);
     
     // Verify initial state
-    await expect(page.getByText('Active (1)')).toBeVisible();
-    await expect(page.getByText('Completed (0)')).toBeVisible();
+    await expectSectionCounts(page, { active: 1, completed: 0 });
     
     // Complete the task
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Verify counts updated
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Completed (1)')).toBeVisible();
+    await expectSectionCounts(page, { active: 0, completed: 1 });
     
     // Add another task and complete it
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Verify both tasks are completed
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Completed (2)')).toBeVisible();
+    await expectSectionCounts(page, { active: 0, completed: 2 });
   });
 
   test('should maintain section counts when deleting tasks', async ({ page }) => {
@@ -37,16 +34,14 @@ test.describe('TaskFlow App - Section State During Operations', () => {
     await addTask(page, TEST_TASKS.first);
     
     // Verify initial state
-    await expect(page.getByText('Active (1)')).toBeVisible();
-    await expect(page.getByText('Deleted (0)')).toBeVisible();
+    await expectSectionCounts(page, { active: 1, deleted: 0 });
     
     // Delete the task using delete button
-    await getDeleteButton(page).click();
+    await deleteTask(page);
     await waitForAnimations(page);
     
     // Verify counts updated
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Deleted (1)')).toBeVisible();
+    await expectSectionCounts(page, { active: 0, deleted: 1 });
     
     // Add another task and delete it
     await addTask(page, TEST_TASKS.second);

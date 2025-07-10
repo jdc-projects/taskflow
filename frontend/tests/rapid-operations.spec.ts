@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, TEST_TASKS } from './test-utils';
+import { navigateToApp, addTask, TEST_TASKS, expectSectionCounts, expectTaskVisible, completeTask } from './test-utils';
 
 test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
   test.beforeEach(async ({ page }) => {
@@ -18,31 +18,30 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
     await page.waitForTimeout(1000);
     
     // Verify all tasks were added correctly
-    await expect(page.getByText('Active (5)')).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.second)).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.third)).toBeVisible();
-    await expect(page.getByText('Fourth task')).toBeVisible();
-    await expect(page.getByText('Fifth task')).toBeVisible();
+    await expectSectionCounts(page, { active: 5 });
+    await expectTaskVisible(page, TEST_TASKS.first);
+    await expectTaskVisible(page, TEST_TASKS.second);
+    await expectTaskVisible(page, TEST_TASKS.third);
+    await expectTaskVisible(page, 'Fourth task');
+    await expectTaskVisible(page, 'Fifth task');
   });
 
   test('should handle rapid task completions without state corruption', async ({ page }) => {
     // Add one task, complete it, then add another - repeat for predictable behavior
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     
     await addTask(page, TEST_TASKS.third);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     
     // Wait for all state updates to complete
     await page.waitForTimeout(1000);
     
     // Verify final state is correct
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Completed (3)')).toBeVisible();
+    await expectSectionCounts(page, { active: 0, completed: 3 });
   });
 
   test('should handle rapid task deletions without state corruption', async ({ page }) => {

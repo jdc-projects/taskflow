@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 /**
  * Common test utilities for TaskFlow application
@@ -105,3 +105,81 @@ export const SELECTORS = {
   completedSection: '[data-testid="completed-section"]',
   deletedSection: '[data-testid="deleted-section"]'
 } as const;
+
+/**
+ * Assertion helpers for common test patterns
+ */
+
+/**
+ * Assert that a section has the expected count
+ */
+export async function expectSectionCount(page: Page, sectionName: string, count: number) {
+  await expect(page.getByText(`${sectionName} (${count})`)).toBeVisible();
+}
+
+/**
+ * Assert multiple section counts at once
+ */
+export async function expectSectionCounts(page: Page, counts: { active?: number; completed?: number; deleted?: number }) {
+  if (counts.active !== undefined) {
+    await expectSectionCount(page, 'Active', counts.active);
+  }
+  if (counts.completed !== undefined) {
+    await expectSectionCount(page, 'Completed', counts.completed);
+  }
+  if (counts.deleted !== undefined) {
+    await expectSectionCount(page, 'Deleted', counts.deleted);
+  }
+}
+
+/**
+ * Assert that a task is visible in a specific section
+ */
+export async function expectTaskInSection(page: Page, taskText: string, sectionTestId: string, shouldBeVisible: boolean = true) {
+  const assertion = expect(page.locator(`[data-testid="${sectionTestId}"]`).getByText(taskText));
+  if (shouldBeVisible) {
+    await assertion.toBeVisible();
+  } else {
+    await assertion.not.toBeVisible();
+  }
+}
+
+/**
+ * Complete a task by clicking its checkbox in the active section
+ */
+export async function completeTask(page: Page, taskIndex: number = 0) {
+  await page.locator('[data-testid="active-section"] input[type="checkbox"]').nth(taskIndex).click();
+}
+
+/**
+ * Delete a task using the delete button in the active section
+ */
+export async function deleteTask(page: Page, taskIndex: number = 0) {
+  await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').nth(taskIndex).click();
+}
+
+/**
+ * Restore a task from the deleted section
+ */
+export async function restoreTask(page: Page, taskIndex: number = 0) {
+  await page.locator('[data-testid="deleted-section"] [data-testid="restore-todo"]').nth(taskIndex).click();
+}
+
+/**
+ * Permanently delete a task from the deleted section
+ */
+export async function permanentDeleteTask(page: Page, taskIndex: number = 0) {
+  await page.locator('[data-testid="deleted-section"] [data-testid="permanent-delete-todo"]').nth(taskIndex).click();
+}
+
+/**
+ * Assert that a task is visible anywhere on the page
+ */
+export async function expectTaskVisible(page: Page, taskText: string, shouldBeVisible: boolean = true) {
+  const assertion = expect(page.getByText(taskText));
+  if (shouldBeVisible) {
+    await assertion.toBeVisible();
+  } else {
+    await assertion.not.toBeVisible();
+  }
+}
