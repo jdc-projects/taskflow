@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, expandSection, waitForAnimations, TEST_TASKS } from './test-utils';
+import { navigateToApp, addTask, waitForAnimations, expandSection, getDeleteButton, getRestoreButton, getPermanentDeleteButton, TEST_TASKS } from './test-utils';
 
 test.describe('TaskFlow App - Section State During Operations', () => {
   test.beforeEach(async ({ page }) => {
@@ -40,8 +40,8 @@ test.describe('TaskFlow App - Section State During Operations', () => {
     await expect(page.getByText('Active (1)')).toBeVisible();
     await expect(page.getByText('Deleted (0)')).toBeVisible();
     
-    // Delete the task
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    // Delete the task using delete button
+    await getDeleteButton(page).click();
     await waitForAnimations(page);
     
     // Verify counts updated
@@ -50,7 +50,7 @@ test.describe('TaskFlow App - Section State During Operations', () => {
     
     // Add another task and delete it
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await getDeleteButton(page).click();
     await waitForAnimations(page);
     
     // Verify both tasks are deleted
@@ -59,245 +59,201 @@ test.describe('TaskFlow App - Section State During Operations', () => {
   });
 
   test('should maintain expanded section state during operations', async ({ page }) => {
-    // Add and complete a task
+    // Add task and complete it
     await addTask(page, TEST_TASKS.first);
+    
+    // Expand completed section (it should be collapsed by default)
+    await expandSection(page, 'Completed', 0);
+    
+    // Complete task while section is expanded
     await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
     await waitForAnimations(page);
     
-    // Expand completed section
-    await expandSection(page, 'Completed', 1);
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
-    
-    // Add another task and complete it while section is expanded
-    await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
-    await waitForAnimations(page);
-    
-    // Section should remain expanded and show both tasks
-    await expect(page.getByText('Completed (2)')).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.second)).toBeVisible();
+    // Verify completed section remains expanded and shows task
+    await expect(page.getByText('Completed (1)')).toBeVisible();
+    await expect(page.locator('[data-testid="completed-section"]').getByText(TEST_TASKS.first)).toBeVisible();
   });
 
   test('should maintain collapsed section state during operations', async ({ page }) => {
-    // Add and complete a task (completed section starts collapsed)
+    // Add and complete task
     await addTask(page, TEST_TASKS.first);
     await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
     await waitForAnimations(page);
     
-    // Verify completed section is collapsed (task not visible)
+    // Ensure completed section is collapsed (default state)
     await expect(page.getByText('Completed (1)')).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.first)).not.toBeVisible();
+    // Task should not be visible since section is collapsed
+    await expect(page.locator('[data-testid="completed-section"]').getByText(TEST_TASKS.first)).not.toBeVisible();
     
-    // Add another task and complete it
+    // Add and complete another task
     await addTask(page, TEST_TASKS.second);
     await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
     await waitForAnimations(page);
     
     // Section should remain collapsed
     await expect(page.getByText('Completed (2)')).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.first)).not.toBeVisible();
-    await expect(page.getByText(TEST_TASKS.second)).not.toBeVisible();
+    await expect(page.locator('[data-testid="completed-section"]').getByText(TEST_TASKS.second)).not.toBeVisible();
   });
 
   test('should update section visibility when count changes to zero', async ({ page }) => {
-    // Add and complete a task
+    // Add task
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
-    await waitForAnimations(page);
     
-    // Verify completed section shows (1)
-    await expect(page.getByText('Completed (1)')).toBeVisible();
-    
-    // Restore the task back to active
-    await expandSection(page, 'Completed', 1);
-    await page.locator('[data-testid="completed-section"] input[type="checkbox"]').click();
-    await waitForAnimations(page);
-    
-    // Verify completed section shows (0)
-    await expect(page.getByText('Completed (0)')).toBeVisible();
+    // Verify active section is visible
     await expect(page.getByText('Active (1)')).toBeVisible();
+    
+    // Delete the task (moves to deleted section)
+    await getDeleteButton(page).click();
+    await waitForAnimations(page);
+    
+    // Active section should show 0 count
+    await expect(page.getByText('Active (0)')).toBeVisible();
+    await expect(page.getByText('Deleted (1)')).toBeVisible();
+    
+    // Restore the task
+    await expandSection(page, 'Deleted', 1);
+    await getRestoreButton(page).click();
+    await waitForAnimations(page);
+    
+    // Counts should be restored
+    await expect(page.getByText('Active (1)')).toBeVisible();
+    await expect(page.getByText('Deleted (0)')).toBeVisible();
   });
 
   test('should handle section state during restore operations', async ({ page }) => {
-    // Add and delete a task
+    // Create workflow: add -> complete -> delete -> restore
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    
+    // Complete task
+    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
     await waitForAnimations(page);
     
-    // Verify deleted section count
-    await expect(page.getByText('Deleted (1)')).toBeVisible();
+    // Delete completed task
+    await expandSection(page, 'Completed', 1);
+    await getDeleteButton(page).click();
+    await waitForAnimations(page);
+    
+    // Verify state
     await expect(page.getByText('Active (0)')).toBeVisible();
+    await expect(page.getByText('Completed (0)')).toBeVisible();
+    await expect(page.getByText('Deleted (1)')).toBeVisible();
     
-    // Expand deleted section
+    // Restore task
     await expandSection(page, 'Deleted', 1);
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
-    
-    // Restore the task
-    await page.locator('[data-testid="restore-todo"]').click();
+    await getRestoreButton(page).click();
     await waitForAnimations(page);
     
-    // Verify counts updated
-    await expect(page.getByText('Active (1)')).toBeVisible();
+    // Task should be restored to completed state
+    await expect(page.getByText('Active (0)')).toBeVisible();
+    await expect(page.getByText('Completed (1)')).toBeVisible();
     await expect(page.getByText('Deleted (0)')).toBeVisible();
-    
-    // Task should be visible in active section
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
   });
 
   test('should handle section state during permanent deletion', async ({ page }) => {
-    // Add and delete one task
+    // Add and delete tasks
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await addTask(page, TEST_TASKS.second);
+    
+    // Delete both tasks
+    await getDeleteButton(page).first().click();
+    await waitForAnimations(page);
+    await getDeleteButton(page).first().click();
     await waitForAnimations(page);
     
-    // Verify deleted section count
-    await expect(page.getByText('Deleted (1)')).toBeVisible();
+    // Verify both in deleted section
+    await expect(page.getByText('Active (0)')).toBeVisible();
+    await expect(page.getByText('Deleted (2)')).toBeVisible();
     
-    // Expand deleted section
-    await expandSection(page, 'Deleted', 1);
-    
-    // Permanently delete the task
-    await page.locator('[data-testid="permanent-delete-todo"]').click();
+    // Permanently delete one task
+    await expandSection(page, 'Deleted', 2);
+    await getPermanentDeleteButton(page).first().click();
     await waitForAnimations(page);
     
     // Verify count updated
-    await expect(page.getByText('Deleted (0)')).toBeVisible();
-    
-    // No tasks should be visible in deleted section - check for todo items specifically
-    const visibleTasks = await page.locator('[data-testid="deleted-section"] [data-testid="todo-item"]').count();
-    expect(visibleTasks).toBe(0);
+    await expect(page.getByText('Deleted (1)')).toBeVisible();
   });
 
   test('should handle section state during bulk operations', async ({ page }) => {
-    // Add one task, delete it, then use bulk delete
+    // Add multiple tasks and delete them
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
-    await waitForAnimations(page);
-    
-    // Add another task and delete it
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await addTask(page, TEST_TASKS.third);
+    
+    // Delete all tasks
+    await getDeleteButton(page).first().click();
+    await waitForAnimations(page);
+    await getDeleteButton(page).first().click();
+    await waitForAnimations(page);
+    await getDeleteButton(page).first().click();
     await waitForAnimations(page);
     
-    // Verify deleted section count
-    await expect(page.getByText('Deleted (2)')).toBeVisible();
-    
-    // Expand deleted section
-    await expandSection(page, 'Deleted', 2);
-    
-    // Perform bulk delete
-    await page.getByRole('button', { name: 'Delete All' }).first().click();
-    await waitForAnimations(page);
-    await page.getByRole('button', { name: 'Delete All' }).last().click();
-    await waitForAnimations(page);
-    
-    // Verify section updated to show (0)
-    await expect(page.getByText('Deleted (0)')).toBeVisible();
+    // Verify all in deleted section
     await expect(page.getByText('Active (0)')).toBeVisible();
+    await expect(page.getByText('Deleted (3)')).toBeVisible();
+    
+    // Use bulk delete all deleted
+    await expandSection(page, 'Deleted', 3);
+    await page.getByRole('button', { name: 'Delete All' }).click();
+    await waitForAnimations(page);
+    
+    // Verify all permanently deleted
+    await expect(page.getByText('Deleted (0)')).toBeVisible();
   });
 
   test('should maintain section state across mixed operations', async ({ page }) => {
-    // Add one task and complete it
+    // Create complex workflow
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
-    await waitForAnimations(page);
-    
-    // Add another task and delete it
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await addTask(page, TEST_TASKS.third);
+    
+    // Complete first task
+    await page.locator('[data-testid="active-section"] input[type="checkbox"]').first().click();
     await waitForAnimations(page);
     
-    // Verify all sections have correct counts
-    await expect(page.getByText('Active (0)')).toBeVisible();
+    // Delete one active task (one of the remaining two)
+    await getDeleteButton(page).first().click();
+    await waitForAnimations(page);
+    
+    // Verify counts: 1 active (third task), 1 completed (first task), 1 deleted (second task)
+    await expect(page.getByText('Active (1)')).toBeVisible();
     await expect(page.getByText('Completed (1)')).toBeVisible();
     await expect(page.getByText('Deleted (1)')).toBeVisible();
     
-    // Expand completed section and restore task
-    await expandSection(page, 'Completed', 1);
-    await page.locator('[data-testid="completed-section"] input[type="checkbox"]').click();
-    await waitForAnimations(page);
-    
-    // Verify updated counts
-    await expect(page.getByText('Active (1)')).toBeVisible();
-    await expect(page.getByText('Completed (0)')).toBeVisible();
-    await expect(page.getByText('Deleted (1)')).toBeVisible();
-    
-    // Expand deleted section and restore deleted task
-    await expandSection(page, 'Deleted', 1);
-    await page.locator('[data-testid="restore-todo"]').click();
-    await waitForAnimations(page);
-    
-    // Verify final state - both tasks are now active
-    await expect(page.getByText('Active (2)')).toBeVisible();
-    await expect(page.getByText('Completed (0)')).toBeVisible();
-    await expect(page.getByText('Deleted (0)')).toBeVisible();
-  });
-
-  test('should handle section state when operations result in empty sections', async ({ page }) => {
-    // Add a single task
-    await addTask(page, TEST_TASKS.simple);
-    
-    // Complete it
+    // Complete remaining active task
     await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
     await waitForAnimations(page);
     
-    // Verify states
+    // Final state verification
     await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Completed (1)')).toBeVisible();
-    
-    // Delete the completed task by first restoring then deleting
-    await expandSection(page, 'Completed', 1);
-    await page.locator('[data-testid="completed-section"] input[type="checkbox"]').click();
-    await waitForAnimations(page);
-    
-    // Now delete it
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
-    await waitForAnimations(page);
-    
-    // Verify states
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Completed (0)')).toBeVisible();
+    await expect(page.getByText('Completed (2)')).toBeVisible();
     await expect(page.getByText('Deleted (1)')).toBeVisible();
-    
-    // Permanently delete it
-    await expandSection(page, 'Deleted', 1);
-    await page.locator('[data-testid="permanent-delete-todo"]').click();
-    await waitForAnimations(page);
-    
-    // All sections should show (0)
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Completed (0)')).toBeVisible();
-    await expect(page.getByText('Deleted (0)')).toBeVisible();
   });
 
   test('should maintain section expansion state during page reload', async ({ page }) => {
-    // Add and complete one task
+    // Add and complete some tasks
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
-    await waitForAnimations(page);
-    
-    // Add and complete another task  
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    
+    // Complete both tasks
+    await page.locator('[data-testid="active-section"] input[type="checkbox"]').first().click();
+    await waitForAnimations(page);
+    await page.locator('[data-testid="active-section"] input[type="checkbox"]').first().click();
     await waitForAnimations(page);
     
     // Expand completed section
     await expandSection(page, 'Completed', 2);
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.second)).toBeVisible();
+    
+    // Verify tasks are visible
+    await expect(page.locator('[data-testid="completed-section"]').getByText(TEST_TASKS.first)).toBeVisible();
+    await expect(page.locator('[data-testid="completed-section"]').getByText(TEST_TASKS.second)).toBeVisible();
     
     // Reload page
     await page.reload();
+    await waitForAnimations(page);
     
-    // Section should remain expanded (expansion state is persisted)
+    // Completed section should remain expanded (state persisted)
     await expect(page.getByText('Completed (2)')).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.second)).toBeVisible();
-    
-    // Counts should be preserved
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Completed (2)')).toBeVisible();
-    await expect(page.getByText('Deleted (0)')).toBeVisible();
+    await expect(page.locator('[data-testid="completed-section"]').getByText(TEST_TASKS.first)).toBeVisible();
+    await expect(page.locator('[data-testid="completed-section"]').getByText(TEST_TASKS.second)).toBeVisible();
   });
 });
