@@ -11,6 +11,8 @@ export interface FocusManager {
   focusOnSection: (sectionId: string, fallbackToHeader?: boolean) => void;
   // Focus on the add todo input
   focusOnAddTodo: () => void;
+  // Schedule focus action with animation delay (skips in test environment)
+  scheduleDelayedFocus: (action: () => void, animationDuration: number) => void;
 }
 
 export function useFocusManagement(): FocusManager {
@@ -104,11 +106,19 @@ export function useFocusManagement(): FocusManager {
     }
   }, []);
 
+  const scheduleDelayedFocus = useCallback((action: () => void, animationDuration: number) => {
+    // Skip delayed focus in test environment
+    if (!process.env.NODE_ENV?.includes('test')) {
+      setTimeout(action, animationDuration * 1000 + 100);
+    }
+  }, []);
+
   return {
     storeFocus,
     restoreFocus,
     focusOnTodo,
     focusOnSection,
-    focusOnAddTodo
+    focusOnAddTodo,
+    scheduleDelayedFocus
   };
 }

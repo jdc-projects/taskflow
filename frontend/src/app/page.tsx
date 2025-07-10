@@ -40,56 +40,41 @@ export default function Home() {
   const handleToggleTodo = useCallback((id: string) => {
     focusManager.storeFocus();
     toggleTodo(id);
-    // Restore focus after animation completes, but only if not in test environment
-    if (!process.env.NODE_ENV?.includes('test')) {
-      setTimeout(() => {
-        focusManager.restoreFocus();
-      }, animationDuration * 1000 + 100);
-    }
+    focusManager.scheduleDelayedFocus(() => {
+      focusManager.restoreFocus();
+    }, animationDuration);
   }, [toggleTodo, focusManager, animationDuration]);
 
   const handleDeleteTodo = useCallback((id: string) => {
     focusManager.storeFocus();
     deleteTodo(id);
-    // Focus on deleted section, but only if not in test environment
-    if (!process.env.NODE_ENV?.includes('test')) {
-      setTimeout(() => {
-        focusManager.focusOnSection('deleted-section');
-      }, animationDuration * 1000 + 100);
-    }
+    focusManager.scheduleDelayedFocus(() => {
+      focusManager.focusOnSection('deleted-section');
+    }, animationDuration);
   }, [deleteTodo, focusManager, animationDuration]);
 
   const handleRestoreTodo = useCallback((id: string) => {
     focusManager.storeFocus();
     restoreTodo(id);
-    // Focus on active section, but only if not in test environment
-    if (!process.env.NODE_ENV?.includes('test')) {
-      setTimeout(() => {
-        focusManager.focusOnSection('active-section');
-      }, animationDuration * 1000 + 100);
-    }
+    focusManager.scheduleDelayedFocus(() => {
+      focusManager.focusOnSection('active-section');
+    }, animationDuration);
   }, [restoreTodo, focusManager, animationDuration]);
 
   const handlePermanentDeleteTodo = useCallback((id: string) => {
     focusManager.storeFocus();
     permanentDeleteTodo(id);
-    // Focus should stay in deleted section, but only if not in test environment
-    if (!process.env.NODE_ENV?.includes('test')) {
-      setTimeout(() => {
-        focusManager.focusOnSection('deleted-section');
-      }, animationDuration * 1000 + 100);
-    }
+    focusManager.scheduleDelayedFocus(() => {
+      focusManager.focusOnSection('deleted-section');
+    }, animationDuration);
   }, [permanentDeleteTodo, focusManager, animationDuration]);
 
   const handlePermanentDeleteAllDeleted = useCallback(() => {
     focusManager.storeFocus();
     permanentDeleteAllDeleted();
-    // After bulk delete, focus on add todo input, but only if not in test environment
-    if (!process.env.NODE_ENV?.includes('test')) {
-      setTimeout(() => {
-        focusManager.focusOnAddTodo();
-      }, animationDuration * 1000 + 100);
-    }
+    focusManager.scheduleDelayedFocus(() => {
+      focusManager.focusOnAddTodo();
+    }, animationDuration);
   }, [permanentDeleteAllDeleted, focusManager, animationDuration]);
 
   // Memoized section computation for performance
