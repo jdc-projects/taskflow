@@ -34,4 +34,20 @@ test.describe('TaskFlow App - Restore Functionality', () => {
     // Verify deleted section count is now 0
     await expect(page.getByText('Deleted (0)')).toBeVisible();
   });
+
+  test('should show restore button only for deleted tasks', async ({ page }) => {
+    // Add a task
+    await addTask(page, TEST_TASKS.simple);
+    
+    // Verify restore button is not visible for active tasks
+    await expect(getRestoreButton(page)).not.toBeVisible();
+    
+    // Delete the task
+    await getDeleteButton(page).click();
+    await waitForAnimations(page);
+    
+    // Expand deleted section and verify restore button is visible
+    await expandSection(page, 'Deleted', 1);
+    await expect(getRestoreButton(page)).toBeVisible();
+  });
 });
