@@ -1,4 +1,5 @@
 import { useRef, useCallback } from 'react';
+import { getFocusDelay } from '@/constants/animations';
 
 export interface FocusManager {
   // Store the currently focused element before an operation
@@ -109,7 +110,7 @@ export function useFocusManagement(): FocusManager {
   const scheduleDelayedFocus = useCallback((action: () => void, animationDuration: number) => {
     // Skip delayed focus in test environment
     if (!process.env.NODE_ENV?.includes('test')) {
-      setTimeout(action, animationDuration * 1000 + 100);
+      setTimeout(action, getFocusDelay(animationDuration));
     }
   }, []);
 

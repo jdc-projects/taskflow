@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { ANIMATION_DURATIONS } from '../src/constants/animations';
 
 /**
  * Common test utilities for TaskFlow application
@@ -39,7 +40,7 @@ export async function expandSection(page: Page, sectionName: string, count: numb
 /**
  * Wait for animations to complete
  */
-export async function waitForAnimations(page: Page, duration: number = 200) {
+export async function waitForAnimations(page: Page, duration: number = ANIMATION_DURATIONS.TEST_WAIT) {
   await page.waitForTimeout(duration);
 }
 

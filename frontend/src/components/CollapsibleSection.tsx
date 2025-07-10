@@ -3,6 +3,7 @@ import { Group, Text, ActionIcon, Stack, Button, Box } from '@mantine/core';
 import { IconChevronDown, IconChevronRight, IconTrash } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ANIMATION_DURATIONS } from '@/constants/animations';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -88,7 +89,7 @@ export function CollapsibleSection({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: ANIMATION_DURATIONS.SECTION_TOGGLE }}
           >
             <Box pl="md">
               {count === 0 ? (

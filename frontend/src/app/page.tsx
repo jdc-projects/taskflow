@@ -10,6 +10,7 @@ import { AddTodo } from '@/components/AddTodo';
 import { TaskSection } from '@/components/TaskSection';
 import { AppHeader } from '@/components/AppHeader';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { ANIMATION_DURATIONS } from '@/constants/animations';
 
 export default function Home() {
   const { 
@@ -33,49 +34,46 @@ export default function Home() {
   const focusManager = useFocusManagement();
 
 
-  // Single animation duration for consistency
-  const animationDuration = 0.3;
-
   // Enhanced toggle functions with focus management
   const handleToggleTodo = useCallback((id: string) => {
     focusManager.storeFocus();
     toggleTodo(id);
     focusManager.scheduleDelayedFocus(() => {
       focusManager.restoreFocus();
-    }, animationDuration);
-  }, [toggleTodo, focusManager, animationDuration]);
+    }, ANIMATION_DURATIONS.TASK_TRANSITION);
+  }, [toggleTodo, focusManager]);
 
   const handleDeleteTodo = useCallback((id: string) => {
     focusManager.storeFocus();
     deleteTodo(id);
     focusManager.scheduleDelayedFocus(() => {
       focusManager.focusOnSection('deleted-section');
-    }, animationDuration);
-  }, [deleteTodo, focusManager, animationDuration]);
+    }, ANIMATION_DURATIONS.TASK_TRANSITION);
+  }, [deleteTodo, focusManager]);
 
   const handleRestoreTodo = useCallback((id: string) => {
     focusManager.storeFocus();
     restoreTodo(id);
     focusManager.scheduleDelayedFocus(() => {
       focusManager.focusOnSection('active-section');
-    }, animationDuration);
-  }, [restoreTodo, focusManager, animationDuration]);
+    }, ANIMATION_DURATIONS.TASK_TRANSITION);
+  }, [restoreTodo, focusManager]);
 
   const handlePermanentDeleteTodo = useCallback((id: string) => {
     focusManager.storeFocus();
     permanentDeleteTodo(id);
     focusManager.scheduleDelayedFocus(() => {
       focusManager.focusOnSection('deleted-section');
-    }, animationDuration);
-  }, [permanentDeleteTodo, focusManager, animationDuration]);
+    }, ANIMATION_DURATIONS.TASK_TRANSITION);
+  }, [permanentDeleteTodo, focusManager]);
 
   const handlePermanentDeleteAllDeleted = useCallback(() => {
     focusManager.storeFocus();
     permanentDeleteAllDeleted();
     focusManager.scheduleDelayedFocus(() => {
       focusManager.focusOnAddTodo();
-    }, animationDuration);
-  }, [permanentDeleteAllDeleted, focusManager, animationDuration]);
+    }, ANIMATION_DURATIONS.TASK_TRANSITION);
+  }, [permanentDeleteAllDeleted, focusManager]);
 
   // Memoized section computation for performance
   const incompleteTasks = useMemo(() => 
@@ -122,7 +120,7 @@ export default function Home() {
                 onDeleteTodo={handleDeleteTodo}
                 onRestoreTodo={handleRestoreTodo}
                 onPermanentDeleteTodo={handlePermanentDeleteTodo}
-                animationDuration={animationDuration}
+                animationDuration={ANIMATION_DURATIONS.TASK_TRANSITION}
                 testId="active-section"
               />
 
@@ -136,7 +134,7 @@ export default function Home() {
                 onDeleteTodo={handleDeleteTodo}
                 onRestoreTodo={handleRestoreTodo}
                 onPermanentDeleteTodo={handlePermanentDeleteTodo}
-                animationDuration={animationDuration}
+                animationDuration={ANIMATION_DURATIONS.TASK_TRANSITION}
                 testId="completed-section"
               />
 
@@ -151,7 +149,7 @@ export default function Home() {
                 onRestoreTodo={handleRestoreTodo}
                 onPermanentDeleteTodo={handlePermanentDeleteTodo}
                 onPermanentDeleteAll={handlePermanentDeleteAllDeleted}
-                animationDuration={animationDuration}
+                animationDuration={ANIMATION_DURATIONS.TASK_TRANSITION}
                 testId="deleted-section"
               />
             </Stack>
