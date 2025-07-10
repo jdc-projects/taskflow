@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Todo } from '@/types/todo';
+import { useDebounce } from './useDebounce';
+import { validateTaskText, sanitizeTaskText } from '@/utils/validation';
+import { validateAndMigrateTodos } from '@/schemas/todo';
 
 const STORAGE_KEY = 'taskflow-todos';
 
@@ -11,38 +14,50 @@ export function useTodos() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const loadedTodos = JSON.parse(stored);
-        // Migrate existing todos to have deleted field
-        const migratedTodos = loadedTodos.map((todo: Todo) => ({
-          ...todo,
-          deleted: todo.deleted || false,
-        }));
-        setTodos(migratedTodos);
+        const parsedData = JSON.parse(stored);
+        const validatedTodos = validateAndMigrateTodos(parsedData);
+        setTodos(validatedTodos);
       }
     } catch (error) {
       console.error('Failed to load todos from localStorage:', error);
+      // If localStorage is corrupted, start with empty array
+      setTodos([]);
     } finally {
       setIsLoaded(true);
     }
   }, []);
 
+  // Debounced localStorage save function to reduce write frequency during rapid operations
+  const saveToStorage = useCallback((todosToSave: Todo[]) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(todosToSave));
+    } catch (error) {
+      console.error('Failed to save todos to localStorage:', error);
+    }
+  }, []);
+
+  const debouncedSave = useDebounce(saveToStorage as (...args: unknown[]) => unknown, 300); // 300ms debounce
+
   useEffect(() => {
     if (isLoaded) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-      } catch (error) {
-        console.error('Failed to save todos to localStorage:', error);
-      }
+      debouncedSave(todos);
     }
-  }, [todos, isLoaded]);
+  }, [todos, isLoaded, debouncedSave]);
 
   const addTodo = useCallback((text: string) => {
-    const trimmedText = text.trim();
-    if (!trimmedText) return;
+    // Validate and sanitize input
+    const validation = validateTaskText(text);
+    if (!validation.isValid) {
+      console.warn('Invalid task text:', validation.error);
+      return;
+    }
+
+    const sanitizedText = sanitizeTaskText(text);
+    if (!sanitizedText) return;
     
     const newTodo: Todo = {
       id: crypto.randomUUID(),
-      text: trimmedText,
+      text: sanitizedText,
       completed: false,
       deleted: false,
     };

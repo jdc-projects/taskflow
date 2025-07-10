@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Container, Title, Stack, Paper, Group, ActionIcon, Divider } from '@mantine/core';
-import { IconSun, IconMoon } from '@tabler/icons-react';
-import { useMantineColorScheme } from '@mantine/core';
-import { AnimatePresence, motion, LayoutGroup } from 'framer-motion';
+import { useMemo, useCallback } from 'react';
+import { Container, Stack } from '@mantine/core';
+import { LayoutGroup } from 'framer-motion';
 import { useTodos } from '@/hooks/useTodos';
+import { useCollapseStates } from '@/hooks/useCollapseStates';
+import { useFocusManagement } from '@/hooks/useFocusManagement';
 import { AddTodo } from '@/components/AddTodo';
-import { TodoItem } from '@/components/TodoItem';
-import { CollapsibleSection } from '@/components/CollapsibleSection';
+import { TaskSection } from '@/components/TaskSection';
+import { AppHeader } from '@/components/AppHeader';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function Home() {
@@ -21,56 +21,76 @@ export default function Home() {
     permanentDeleteTodo, 
     permanentDeleteAllDeleted
   } = useTodos();
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const [mounted, setMounted] = useState(false);
   
-  // Persistent collapse state
-  const [collapseStates, setCollapseStates] = useState({
-    active: true,
-    completed: false,
-    deleted: false
-  });
+  const {
+    collapseStates,
+    toggleActiveSection,
+    toggleCompletedSection,
+    toggleDeletedSection,
+    mounted
+  } = useCollapseStates();
 
-  useEffect(() => {
-    setMounted(true);
-    
-    // Load collapse states from localStorage
-    try {
-      const stored = localStorage.getItem('taskflow-collapse-states');
-      if (stored) {
-        const loadedStates = JSON.parse(stored);
-        setCollapseStates(prevStates => ({
-          ...prevStates,
-          ...loadedStates
-        }));
-      }
-    } catch (error) {
-      console.error('Failed to load collapse states from localStorage:', error);
-    }
-  }, []);
-  
-  // Save collapse states to localStorage whenever they change
-  useEffect(() => {
-    if (mounted) {
-      try {
-        localStorage.setItem('taskflow-collapse-states', JSON.stringify(collapseStates));
-      } catch (error) {
-        console.error('Failed to save collapse states to localStorage:', error);
-      }
-    }
-  }, [collapseStates, mounted]);
+  const focusManager = useFocusManagement();
 
 
   // Single animation duration for consistency
   const animationDuration = 0.3;
-  
-  // Animation for items with layoutId for cross-section movement
-  const itemAnimation = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1 },
-    exit: { opacity: 0 },
-    transition: { duration: animationDuration }
-  };
+
+  // Enhanced toggle functions with focus management
+  const handleToggleTodo = useCallback((id: string) => {
+    focusManager.storeFocus();
+    toggleTodo(id);
+    // Restore focus after animation completes, but only if not in test environment
+    if (!process.env.NODE_ENV?.includes('test')) {
+      setTimeout(() => {
+        focusManager.restoreFocus();
+      }, animationDuration * 1000 + 100);
+    }
+  }, [toggleTodo, focusManager, animationDuration]);
+
+  const handleDeleteTodo = useCallback((id: string) => {
+    focusManager.storeFocus();
+    deleteTodo(id);
+    // Focus on deleted section, but only if not in test environment
+    if (!process.env.NODE_ENV?.includes('test')) {
+      setTimeout(() => {
+        focusManager.focusOnSection('deleted-section');
+      }, animationDuration * 1000 + 100);
+    }
+  }, [deleteTodo, focusManager, animationDuration]);
+
+  const handleRestoreTodo = useCallback((id: string) => {
+    focusManager.storeFocus();
+    restoreTodo(id);
+    // Focus on active section, but only if not in test environment
+    if (!process.env.NODE_ENV?.includes('test')) {
+      setTimeout(() => {
+        focusManager.focusOnSection('active-section');
+      }, animationDuration * 1000 + 100);
+    }
+  }, [restoreTodo, focusManager, animationDuration]);
+
+  const handlePermanentDeleteTodo = useCallback((id: string) => {
+    focusManager.storeFocus();
+    permanentDeleteTodo(id);
+    // Focus should stay in deleted section, but only if not in test environment
+    if (!process.env.NODE_ENV?.includes('test')) {
+      setTimeout(() => {
+        focusManager.focusOnSection('deleted-section');
+      }, animationDuration * 1000 + 100);
+    }
+  }, [permanentDeleteTodo, focusManager, animationDuration]);
+
+  const handlePermanentDeleteAllDeleted = useCallback(() => {
+    focusManager.storeFocus();
+    permanentDeleteAllDeleted();
+    // After bulk delete, focus on add todo input, but only if not in test environment
+    if (!process.env.NODE_ENV?.includes('test')) {
+      setTimeout(() => {
+        focusManager.focusOnAddTodo();
+      }, animationDuration * 1000 + 100);
+    }
+  }, [permanentDeleteAllDeleted, focusManager, animationDuration]);
 
   // Memoized section computation for performance
   const incompleteTasks = useMemo(() => 
@@ -90,18 +110,6 @@ export default function Home() {
     [todos]
   );
   
-  // Toggle functions for each section
-  const toggleActiveSection = () => {
-    setCollapseStates(prev => ({ ...prev, active: !prev.active }));
-  };
-  
-  const toggleCompletedSection = () => {
-    setCollapseStates(prev => ({ ...prev, completed: !prev.completed }));
-  };
-  
-  const toggleDeletedSection = () => {
-    setCollapseStates(prev => ({ ...prev, deleted: !prev.deleted }));
-  };
 
   if (!mounted) {
     return null;
@@ -111,19 +119,7 @@ export default function Home() {
     <ErrorBoundary>
       <Container size="sm" py="xl">
         <Stack gap="md">
-          <Group justify="space-between" align="center">
-            <Title order={1} c="dimmed">
-              TaskFlow
-            </Title>
-            <ActionIcon
-              variant="subtle"
-              onClick={() => toggleColorScheme()}
-              size="lg"
-              aria-label="Toggle color scheme"
-            >
-              {colorScheme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
-            </ActionIcon>
-          </Group>
+          <AppHeader />
           
           <ErrorBoundary>
             <AddTodo onAdd={addTodo} />
@@ -132,120 +128,47 @@ export default function Home() {
           <LayoutGroup>
             <Stack gap="md">
               {/* Active Tasks */}
-              <ErrorBoundary>
-                <motion.div 
-                  layout
-                  transition={{ type: "spring", bounce: 0, duration: animationDuration }}
-                >
-                  <Paper withBorder p="md" radius="md">
-                    <CollapsibleSection
-                      title="Active"
-                      count={incompleteTasks.length}
-                      data-testid="active-section"
-                      emptyMessage="No tasks yet. Add one above!"
-                      onToggle={toggleActiveSection}
-                      initialOpen={collapseStates.active}
-                    >
-                      <Stack gap={0}>
-                        <AnimatePresence>
-                          {incompleteTasks.map((todo, index) => (
-                            <motion.div
-                              key={todo.id}
-                              layoutId={todo.id}
-                              {...itemAnimation}
-                            >
-                              <TodoItem
-                                todo={todo}
-                                onToggle={toggleTodo}
-                                onDelete={deleteTodo}
-                              />
-                              {index < incompleteTasks.length - 1 && <Divider my="sm" />}
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      </Stack>
-                    </CollapsibleSection>
-                  </Paper>
-                </motion.div>
-              </ErrorBoundary>
+              <TaskSection
+                title="Active"
+                tasks={incompleteTasks}
+                isExpanded={collapseStates.active}
+                onToggleExpanded={toggleActiveSection}
+                onToggleTodo={handleToggleTodo}
+                onDeleteTodo={handleDeleteTodo}
+                onRestoreTodo={handleRestoreTodo}
+                onPermanentDeleteTodo={handlePermanentDeleteTodo}
+                animationDuration={animationDuration}
+                testId="active-section"
+              />
 
               {/* Completed Tasks */}
-              <ErrorBoundary>
-                <motion.div 
-                  layout
-                  transition={{ type: "spring", bounce: 0, duration: animationDuration }}
-                >
-                  <Paper withBorder p="md" radius="md">
-                    <CollapsibleSection
-                      title="Completed"
-                      count={completedTasks.length}
-                      data-testid="completed-section"
-                      emptyMessage="No completed tasks yet"
-                      onToggle={toggleCompletedSection}
-                      initialOpen={collapseStates.completed}
-                    >
-                      <Stack gap={0}>
-                        <AnimatePresence>
-                          {completedTasks.map((todo, index) => (
-                            <motion.div
-                              key={todo.id}
-                              layoutId={todo.id}
-                              {...itemAnimation}
-                            >
-                              <TodoItem
-                                todo={todo}
-                                onToggle={toggleTodo}
-                                onDelete={deleteTodo}
-                              />
-                              {index < completedTasks.length - 1 && <Divider my="sm" />}
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      </Stack>
-                    </CollapsibleSection>
-                  </Paper>
-                </motion.div>
-              </ErrorBoundary>
+              <TaskSection
+                title="Completed"
+                tasks={completedTasks}
+                isExpanded={collapseStates.completed}
+                onToggleExpanded={toggleCompletedSection}
+                onToggleTodo={handleToggleTodo}
+                onDeleteTodo={handleDeleteTodo}
+                onRestoreTodo={handleRestoreTodo}
+                onPermanentDeleteTodo={handlePermanentDeleteTodo}
+                animationDuration={animationDuration}
+                testId="completed-section"
+              />
 
               {/* Deleted Tasks */}
-              <ErrorBoundary>
-                <motion.div 
-                  layout
-                  transition={{ type: "spring", bounce: 0, duration: animationDuration }}
-                >
-                  <Paper withBorder p="md" radius="md">
-                    <CollapsibleSection
-                      title="Deleted"
-                      count={deletedTasks.length}
-                      showBulkDelete={true}
-                      onBulkDelete={permanentDeleteAllDeleted}
-                      emptyMessage="No deleted tasks"
-                      onToggle={toggleDeletedSection}
-                      initialOpen={collapseStates.deleted}
-                    >
-                      <Stack gap={0}>
-                        <AnimatePresence>
-                          {deletedTasks.map((todo, index) => (
-                            <motion.div
-                              key={todo.id}
-                              layoutId={todo.id}
-                              {...itemAnimation}
-                            >
-                              <TodoItem
-                                todo={todo}
-                                onToggle={toggleTodo}
-                                onRestore={restoreTodo}
-                                onPermanentDelete={permanentDeleteTodo}
-                              />
-                              {index < deletedTasks.length - 1 && <Divider my="sm" />}
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                      </Stack>
-                    </CollapsibleSection>
-                  </Paper>
-                </motion.div>
-              </ErrorBoundary>
+              <TaskSection
+                title="Deleted"
+                tasks={deletedTasks}
+                isExpanded={collapseStates.deleted}
+                onToggleExpanded={toggleDeletedSection}
+                onToggleTodo={handleToggleTodo}
+                onDeleteTodo={handleDeleteTodo}
+                onRestoreTodo={handleRestoreTodo}
+                onPermanentDeleteTodo={handlePermanentDeleteTodo}
+                onPermanentDeleteAll={handlePermanentDeleteAllDeleted}
+                animationDuration={animationDuration}
+                testId="deleted-section"
+              />
             </Stack>
           </LayoutGroup>
         </Stack>

@@ -85,6 +85,9 @@ test.describe('TaskFlow App - End-to-End Workflows', () => {
     await expect(page.getByText('Deleted (1)')).toBeVisible();
     await expect(page.getByText('Active (0)')).toBeVisible();
     
+    // Wait for debounced localStorage save
+    await page.waitForTimeout(500);
+    
     // Reload page
     await page.reload();
     

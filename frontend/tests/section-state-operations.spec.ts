@@ -164,8 +164,8 @@ test.describe('TaskFlow App - Section State During Operations', () => {
     // Verify count updated
     await expect(page.getByText('Deleted (0)')).toBeVisible();
     
-    // No tasks should be visible in deleted section
-    const visibleTasks = await page.locator('[data-testid="deleted-section"] p').count();
+    // No tasks should be visible in deleted section - check for todo items specifically
+    const visibleTasks = await page.locator('[data-testid="deleted-section"] [data-testid="todo-item"]').count();
     expect(visibleTasks).toBe(0);
   });
 

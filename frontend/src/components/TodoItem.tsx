@@ -18,7 +18,7 @@ export function TodoItem({
   onPermanentDelete 
 }: TodoItemProps) {
   return (
-    <Group justify="space-between" align="center" py="xs">
+    <Group justify="space-between" align="center" py="xs" data-todo-id={todo.id} data-testid="todo-item">
       <Group align="center">
         <Checkbox
           checked={todo.completed}

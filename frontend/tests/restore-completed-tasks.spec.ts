@@ -190,6 +190,9 @@ test.describe('TaskFlow App - Restore Completed Tasks', () => {
     await expect(page.getByText('Active (1)')).toBeVisible();
     await expect(page.getByText('Completed (0)')).toBeVisible();
     
+    // Wait for debounced localStorage save
+    await page.waitForTimeout(500);
+    
     // Reload page
     await page.reload();
     

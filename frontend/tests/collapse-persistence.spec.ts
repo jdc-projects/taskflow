@@ -16,6 +16,9 @@ test.describe('TaskFlow App - Collapse State Persistence', () => {
     await expect(page.getByText('Completed (1)')).toBeVisible();
     await expect(page.getByText(TEST_TASKS.first)).not.toBeVisible();
     
+    // Wait for debounced localStorage save
+    await page.waitForTimeout(500);
+    
     // Reload the page
     await page.reload();
     
@@ -69,6 +72,9 @@ test.describe('TaskFlow App - Collapse State Persistence', () => {
     // Both tasks should be visible in the active section (which is open by default)
     await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
     await expect(page.getByText(TEST_TASKS.second)).toBeVisible();
+    
+    // Wait for debounced localStorage save
+    await page.waitForTimeout(500);
     
     // Reload page
     await page.reload();

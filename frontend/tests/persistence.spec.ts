@@ -9,6 +9,9 @@ test.describe('TaskFlow App - Persistence', () => {
   test('should persist tasks in local storage', async ({ page }) => {
     await addTask(page, TEST_TASKS.persistent);
     
+    // Wait for debounced localStorage save (300ms debounce + buffer)
+    await page.waitForTimeout(500);
+    
     // Reload the page
     await page.reload();
     
