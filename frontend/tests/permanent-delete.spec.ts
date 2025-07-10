@@ -46,4 +46,38 @@ test.describe('TaskFlow App - Permanent Delete Functionality', () => {
     await expandSection(page, 'Deleted', 1);
     await expect(getPermanentDeleteButton(page)).toBeVisible();
   });
+
+  test('should bulk delete all tasks in deleted section', async ({ page }) => {
+    // Add multiple tasks
+    await addTask(page, TEST_TASKS.first);
+    await addTask(page, TEST_TASKS.second);
+    await waitForAnimations(page);
+    
+    // Delete both tasks
+    const deleteButtons = await page.locator('[data-testid="delete-todo"]').all();
+    await deleteButtons[0].click();
+    await waitForAnimations(page);
+    await deleteButtons[1].click();
+    await waitForAnimations(page);
+    
+    // Verify we have 2 deleted tasks
+    await expect(page.getByText('Deleted (2)')).toBeVisible();
+    
+    // Expand deleted section
+    await expandSection(page, 'Deleted', 2);
+    
+    // Click Delete All button (in the section)
+    await page.getByRole('button', { name: 'Delete All' }).first().click();
+    await waitForAnimations(page);
+    
+    // Confirm in modal
+    await page.getByRole('button', { name: 'Delete All' }).last().click();
+    await waitForAnimations(page);
+    
+    // Verify all tasks are permanently deleted
+    await expect(page.getByText('Deleted (0)')).toBeVisible();
+    await expect(getTaskByText(page, TEST_TASKS.first)).not.toBeVisible();
+    await expect(getTaskByText(page, TEST_TASKS.second)).not.toBeVisible();
+  });
+
 });
