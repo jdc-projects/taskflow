@@ -41,7 +41,7 @@ export function useTodos() {
     if (!trimmedText) return;
     
     const newTodo: Todo = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: crypto.randomUUID(),
       text: trimmedText,
       completed: false,
       deleted: false,
