@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, TEST_TASKS, expectSectionCounts, expectTaskVisible, completeTask } from './test-utils';
+import { navigateToApp, addTask, TEST_TASKS, expectSectionCounts, expectTaskVisible, completeTask, deleteTask } from './test-utils';
 
 test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
   test.beforeEach(async ({ page }) => {
@@ -47,52 +47,49 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
   test('should handle rapid task deletions without state corruption', async ({ page }) => {
     // Add one task, delete it, then add another - repeat for predictable behavior
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await deleteTask(page);
     
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await deleteTask(page);
     
     await addTask(page, TEST_TASKS.third);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await deleteTask(page);
     
     // Wait for all state updates to complete
     await page.waitForTimeout(1000);
     
     // Verify final state is correct
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Deleted (3)')).toBeVisible();
+    await expectSectionCounts(page, { active: 0, deleted: 3 });
   });
 
   test('should handle mixed rapid operations correctly', async ({ page }) => {
     // Add one task and perform complete operation
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     
     // Add another task and delete it
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await deleteTask(page);
     
     // Add third task and complete it
     await addTask(page, TEST_TASKS.third);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     
     // Add fourth task and delete it
     await addTask(page, 'Fourth task');
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await deleteTask(page);
     
     // Wait for all state updates to complete
     await page.waitForTimeout(1000);
     
     // Verify final state - should have 0 active, 2 completed, 2 deleted
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Completed (2)')).toBeVisible();
-    await expect(page.getByText('Deleted (2)')).toBeVisible();
+    await expectSectionCounts(page, { active: 0, completed: 2, deleted: 2 });
   });
 
   test('should handle rapid section toggle operations', async ({ page }) => {
     // Add and complete a task to have a completed section
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     await page.waitForTimeout(200);
     
     // Rapidly toggle the completed section multiple times
@@ -118,13 +115,13 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
   test('should handle concurrent localStorage operations', async ({ page }) => {
     // Perform sequential operations to avoid race conditions but test localStorage persistence
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await deleteTask(page);
     
     await addTask(page, TEST_TASKS.third);
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     
     // Wait for all operations to complete
     await page.waitForTimeout(1000);
@@ -133,9 +130,7 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
     await page.reload();
     
     // Verify state was persisted correctly
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Completed (2)')).toBeVisible();
-    await expect(page.getByText('Deleted (1)')).toBeVisible();
+    await expectSectionCounts(page, { active: 0, completed: 2, deleted: 1 });
     
     // Verify specific tasks are present
     // Expand sections to check task content
@@ -150,13 +145,13 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
   test('should handle rapid restore operations', async ({ page }) => {
     // Add and delete tasks sequentially for predictable state
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await deleteTask(page);
     
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await deleteTask(page);
     
     await addTask(page, TEST_TASKS.third);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await deleteTask(page);
     
     await page.waitForTimeout(300);
     
@@ -175,8 +170,7 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
     await page.waitForTimeout(1000);
     
     // Verify all tasks were restored
-    await expect(page.getByText('Active (3)')).toBeVisible();
-    await expect(page.getByText('Deleted (0)')).toBeVisible();
+    await expectSectionCounts(page, { active: 3, deleted: 0 });
   });
 
   test('should handle operations without losing application stability', async ({ page }) => {
@@ -184,16 +178,16 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
     await addTask(page, TEST_TASKS.first);
     
     // Perform a variety of operations rapidly
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').click();
+    await completeTask(page);
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').click();
+    await deleteTask(page);
     
     // Wait for operations to settle
     await page.waitForTimeout(1000);
     
     // Verify application is still functional by adding a new task
     await addTask(page, 'Stability test task');
-    await expect(page.getByText('Stability test task')).toBeVisible();
+    await expectTaskVisible(page, 'Stability test task');
     
     // Verify section headers exist and have valid counts
     const activeText = await page.locator('text=/Active \\(\\d+\\)/').textContent();
@@ -211,7 +205,7 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
     await addTask(page, TEST_TASKS.second);
     
     // Start some operations
-    await page.locator('[data-testid="active-section"] input[type="checkbox"]').first().click();
+    await completeTask(page, 0);
     
     // Navigate away and back quickly (simulating user behavior)
     await page.reload();
@@ -228,7 +222,7 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
     expect(completedText).toBeTruthy();
     
     // Verify at least our newly added task is present
-    await expect(page.getByText(TEST_TASKS.third)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.third);
   });
 
   test('should handle stress test with many rapid operations', async ({ page }) => {
@@ -244,9 +238,9 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
     for (let i = 0; i < operations; i++) {
       // Alternate between different operations
       if (i % 3 === 0) {
-        await page.locator('[data-testid="active-section"] input[type="checkbox"]').first().click();
+        await completeTask(page, 0);
       } else if (i % 3 === 1) {
-        await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').first().click();
+        await deleteTask(page, 0);
       } else {
         await addTask(page, `Extra task ${i}`);
       }
@@ -270,6 +264,6 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
     
     // Should be able to add a new task after stress test
     await addTask(page, 'Recovery test');
-    await expect(page.getByText('Recovery test')).toBeVisible();
+    await expectTaskVisible(page, 'Recovery test');
   });
 });

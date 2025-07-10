@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, getTaskByText, TEST_TASKS } from './test-utils';
+import { navigateToApp, addTask, getTaskByText, TEST_TASKS, expectTaskVisible } from './test-utils';
 
 test.describe('TaskFlow App - Persistence', () => {
   test.beforeEach(async ({ page }) => {
@@ -16,6 +16,6 @@ test.describe('TaskFlow App - Persistence', () => {
     await page.reload();
     
     // Verify task is still there after reload
-    await expect(getTaskByText(page, TEST_TASKS.persistent)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.persistent);
   });
 });

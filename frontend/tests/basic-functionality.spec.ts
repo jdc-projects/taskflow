@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, getTaskByText, getTaskCheckbox, getDeleteButton, expandSection, waitForAnimations, TEST_TASKS, SELECTORS } from './test-utils';
+import { navigateToApp, addTask, getTaskByText, getTaskCheckbox, getDeleteButton, expandSection, waitForAnimations, TEST_TASKS, SELECTORS, expectTaskVisible, completeTask, deleteTask } from './test-utils';
 
 test.describe('TaskFlow App - Basic Functionality', () => {
   test.beforeEach(async ({ page }) => {
@@ -13,7 +13,7 @@ test.describe('TaskFlow App - Basic Functionality', () => {
   test('should add a new task', async ({ page }) => {
     await addTask(page, TEST_TASKS.simple);
     
-    await expect(getTaskByText(page, TEST_TASKS.simple)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.simple);
   });
 
   test('should not add empty tasks', async ({ page }) => {
@@ -29,8 +29,7 @@ test.describe('TaskFlow App - Basic Functionality', () => {
     await addTask(page, TEST_TASKS.simple);
     
     // Click the checkbox to complete the task
-    const checkbox = getTaskCheckbox(page, 0);
-    await checkbox.click();
+    await completeTask(page);
     
     // Wait for animation to complete
     await waitForAnimations(page);
@@ -46,7 +45,7 @@ test.describe('TaskFlow App - Basic Functionality', () => {
   test('should delete a task', async ({ page }) => {
     await addTask(page, TEST_TASKS.simple);
     
-    await getDeleteButton(page).click();
+    await deleteTask(page);
     
     // Wait for animation
     await waitForAnimations(page);

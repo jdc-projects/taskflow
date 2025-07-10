@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, waitForAnimations, TEST_TASKS } from './test-utils';
+import { navigateToApp, addTask, waitForAnimations, TEST_TASKS, expectSectionCounts, expectTaskVisible, deleteTask } from './test-utils';
 
 test.describe('TaskFlow App - Accessibility', () => {
   test.beforeEach(async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe('TaskFlow App - Accessibility', () => {
     await waitForAnimations(page);
     
     // Verify task was added
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.first);
     
     // Alternatively, test using Tab to Add button and pressing Space/Enter
     await page.keyboard.type(TEST_TASKS.second);
@@ -53,7 +53,7 @@ test.describe('TaskFlow App - Accessibility', () => {
     await page.keyboard.press('Space'); // Activate button
     await waitForAnimations(page);
     
-    await expect(page.getByText(TEST_TASKS.second)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.second);
   });
 
   test('should allow task completion using keyboard', async ({ page }) => {
@@ -72,7 +72,7 @@ test.describe('TaskFlow App - Accessibility', () => {
     await waitForAnimations(page);
     
     // Verify task was completed
-    await expect(page.getByText('Completed (1)')).toBeVisible();
+    await expectSectionCounts(page, { completed: 1 });
   });
 
   test('should allow task deletion using keyboard', async ({ page }) => {
@@ -119,7 +119,7 @@ test.describe('TaskFlow App - Accessibility', () => {
   test('should allow restore operations using keyboard', async ({ page }) => {
     // Add and delete a task
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="delete-todo"]').click();
+    await deleteTask(page);
     await waitForAnimations(page);
     
     // Expand deleted section
@@ -141,7 +141,7 @@ test.describe('TaskFlow App - Accessibility', () => {
   test('should allow permanent deletion using keyboard', async ({ page }) => {
     // Add and delete a task
     await addTask(page, TEST_TASKS.first);
-    await page.locator('[data-testid="delete-todo"]').click();
+    await deleteTask(page);
     await waitForAnimations(page);
     
     // Expand deleted section
@@ -178,9 +178,9 @@ test.describe('TaskFlow App - Accessibility', () => {
     await addTask(page, TEST_TASKS.first);
     await addTask(page, TEST_TASKS.second);
     
-    await page.locator('[data-testid="delete-todo"]').first().click();
+    await deleteTask(page, 0);
     await waitForAnimations(page);
-    await page.locator('[data-testid="delete-todo"]').first().click();
+    await deleteTask(page, 0);
     await waitForAnimations(page);
     
     // Check for deleted tasks (count may vary based on task state changes)

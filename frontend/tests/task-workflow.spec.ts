@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTasks, getTaskByText, getTaskCheckbox, expandSection, waitForAnimations, TEST_TASKS, SELECTORS } from './test-utils';
+import { navigateToApp, addTasks, getTaskByText, getTaskCheckbox, expandSection, waitForAnimations, TEST_TASKS, SELECTORS, completeTask } from './test-utils';
 
 test.describe('TaskFlow App - Task Workflow', () => {
   test.beforeEach(async ({ page }) => {
@@ -12,7 +12,7 @@ test.describe('TaskFlow App - Task Workflow', () => {
     await addTasks(page, tasks);
     
     // Complete the middle task (task2 - which is now at index 1 since task3 was added to top)
-    await getTaskCheckbox(page, 1).click();
+    await completeTask(page, 1);
     
     // Wait for animation to complete
     await waitForAnimations(page);
@@ -34,7 +34,7 @@ test.describe('TaskFlow App - Task Workflow', () => {
     await addTasks(page, tasks);
     
     // Complete task1 (it's now the second checkbox since task2 was added to top)
-    await getTaskCheckbox(page, 1).click();
+    await completeTask(page, 1);
     
     // Wait for animation
     await waitForAnimations(page);
@@ -63,13 +63,13 @@ test.describe('TaskFlow App - Task Workflow', () => {
     
     // Complete tasks in order (task1, task2, task3)
     // With new ordering: task3 (idx 0), task2 (idx 1), task1 (idx 2)
-    await getTaskCheckbox(page, 2).click(); // Complete task1
+    await completeTask(page, 2); // Complete task1
     await page.waitForTimeout(100);
     
-    await getTaskCheckbox(page, 1).click(); // Complete task2
+    await completeTask(page, 1); // Complete task2
     await page.waitForTimeout(100);
     
-    await getTaskCheckbox(page, 0).click(); // Complete task3
+    await completeTask(page, 0); // Complete task3
     await waitForAnimations(page);
     
     // Expand completed section to verify tasks are there

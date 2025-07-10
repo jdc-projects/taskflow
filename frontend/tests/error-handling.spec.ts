@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, waitForAnimations, TEST_TASKS } from './test-utils';
+import { navigateToApp, addTask, waitForAnimations, TEST_TASKS, expectTaskVisible, expectSectionCounts, completeTask, deleteTask } from './test-utils';
 
 test.describe('TaskFlow App - Error Handling', () => {
   test.beforeEach(async ({ page }) => {
@@ -17,12 +17,12 @@ test.describe('TaskFlow App - Error Handling', () => {
     
     // Add task - should still work despite localStorage error
     await addTask(page, TEST_TASKS.first);
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.first);
     
     // Complete task - should still work
-    await page.getByRole('checkbox').click();
+    await completeTask(page);
     await waitForAnimations(page);
-    await expect(page.getByText('Completed (1)')).toBeVisible();
+    await expectSectionCounts(page, { completed: 1 });
     
     // The app should continue functioning despite localStorage errors
     // (errors should be caught and logged, not crash the app)
@@ -46,7 +46,7 @@ test.describe('TaskFlow App - Error Handling', () => {
     
     // Should be able to add tasks
     await addTask(page, TEST_TASKS.simple);
-    await expect(page.getByText(TEST_TASKS.simple)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.simple);
   });
 
   test('should handle corrupted localStorage data gracefully', async ({ page }) => {
@@ -65,7 +65,7 @@ test.describe('TaskFlow App - Error Handling', () => {
     
     // Should be able to add tasks
     await addTask(page, TEST_TASKS.simple);
-    await expect(page.getByText(TEST_TASKS.simple)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.simple);
   });
 
   test('should handle network failures during external operations', async ({ page }) => {
@@ -83,7 +83,7 @@ test.describe('TaskFlow App - Error Handling', () => {
     
     // Delete the task from active by adding another and deleting it
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="delete-todo"]').click();
+    await deleteTask(page);
     await waitForAnimations(page);
     await expect(page.getByText('Deleted (1)')).toBeVisible();
     
@@ -114,7 +114,7 @@ test.describe('TaskFlow App - Error Handling', () => {
     
     // Add another task and delete it
     await addTask(page, TEST_TASKS.second);
-    await page.locator('[data-testid="delete-todo"]').click();
+    await deleteTask(page);
     await waitForAnimations(page);
     
     // App should be functioning without critical console errors

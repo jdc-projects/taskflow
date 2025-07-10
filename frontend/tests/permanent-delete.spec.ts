@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, getTaskByText, getDeleteButton, getPermanentDeleteButton, expandSection, waitForAnimations, TEST_TASKS } from './test-utils';
+import { navigateToApp, addTask, getTaskByText, getDeleteButton, getPermanentDeleteButton, expandSection, waitForAnimations, TEST_TASKS, expectTaskVisible, expectSectionCounts, deleteTask, permanentDeleteTask } from './test-utils';
 
 test.describe('TaskFlow App - Permanent Delete Functionality', () => {
   test.beforeEach(async ({ page }) => {
@@ -11,24 +11,24 @@ test.describe('TaskFlow App - Permanent Delete Functionality', () => {
     await addTask(page, TEST_TASKS.simple);
     
     // Delete the task
-    await getDeleteButton(page).click();
+    await deleteTask(page);
     await waitForAnimations(page);
     
     // Expand deleted section
     await expandSection(page, 'Deleted', 1);
     
     // Verify task is in deleted section
-    await expect(getTaskByText(page, TEST_TASKS.simple)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.simple);
     
     // Permanently delete the task
-    await getPermanentDeleteButton(page).click();
+    await permanentDeleteTask(page);
     await waitForAnimations(page);
     
     // Verify task is completely gone
-    await expect(getTaskByText(page, TEST_TASKS.simple)).not.toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.simple, false);
     
     // Verify deleted section count is 0
-    await expect(page.getByText('Deleted (0)')).toBeVisible();
+    await expectSectionCounts(page, { deleted: 0 });
   });
 
   test('should show permanent delete button only for deleted tasks', async ({ page }) => {
@@ -39,7 +39,7 @@ test.describe('TaskFlow App - Permanent Delete Functionality', () => {
     await expect(getPermanentDeleteButton(page)).not.toBeVisible();
     
     // Delete the task
-    await getDeleteButton(page).click();
+    await deleteTask(page);
     await waitForAnimations(page);
     
     // Expand deleted section and verify permanent delete button is visible
@@ -61,7 +61,7 @@ test.describe('TaskFlow App - Permanent Delete Functionality', () => {
     await waitForAnimations(page);
     
     // Verify we have 2 deleted tasks
-    await expect(page.getByText('Deleted (2)')).toBeVisible();
+    await expectSectionCounts(page, { deleted: 2 });
     
     // Expand deleted section
     await expandSection(page, 'Deleted', 2);
@@ -75,9 +75,9 @@ test.describe('TaskFlow App - Permanent Delete Functionality', () => {
     await waitForAnimations(page);
     
     // Verify all tasks are permanently deleted
-    await expect(page.getByText('Deleted (0)')).toBeVisible();
-    await expect(getTaskByText(page, TEST_TASKS.first)).not.toBeVisible();
-    await expect(getTaskByText(page, TEST_TASKS.second)).not.toBeVisible();
+    await expectSectionCounts(page, { deleted: 0 });
+    await expectTaskVisible(page, TEST_TASKS.first, false);
+    await expectTaskVisible(page, TEST_TASKS.second, false);
   });
 
 });

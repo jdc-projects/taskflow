@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, getDeleteButton, expandSection, waitForAnimations, TEST_TASKS } from './test-utils';
+import { navigateToApp, addTask, expandSection, waitForAnimations, TEST_TASKS, expectTaskVisible, expectSectionCounts, completeTask, deleteTask } from './test-utils';
 
 test.describe('TaskFlow App - Collapse State Persistence', () => {
   test.beforeEach(async ({ page }) => {
@@ -9,12 +9,12 @@ test.describe('TaskFlow App - Collapse State Persistence', () => {
   test('should persist default collapse states after reload', async ({ page }) => {
     // Add and complete a task
     await addTask(page, TEST_TASKS.first);
-    await page.getByRole('checkbox').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Verify completed section shows (1) and is collapsed by default
-    await expect(page.getByText('Completed (1)')).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.first)).not.toBeVisible();
+    await expectSectionCounts(page, { completed: 1 });
+    await expectTaskVisible(page, TEST_TASKS.first, false);
     
     // Wait for debounced localStorage save
     await page.waitForTimeout(500);
@@ -23,8 +23,8 @@ test.describe('TaskFlow App - Collapse State Persistence', () => {
     await page.reload();
     
     // After reload, completed section should maintain default state (collapsed) 
-    await expect(page.getByText('Completed (1)')).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.first)).not.toBeVisible();
+    await expectSectionCounts(page, { completed: 1 });
+    await expectTaskVisible(page, TEST_TASKS.first, false);
     
     // Verify localStorage has correct default states
     const collapseStates = await page.evaluate(() => 
@@ -40,7 +40,7 @@ test.describe('TaskFlow App - Collapse State Persistence', () => {
   test('should expand and collapse sections while maintaining state', async ({ page }) => {
     // Add and delete a task
     await addTask(page, TEST_TASKS.second);
-    await getDeleteButton(page).click();
+    await deleteTask(page);
     await waitForAnimations(page);
     
     // Verify deleted section shows (1) and is collapsed by default

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { navigateToApp, addTask, expandSection, waitForAnimations, TEST_TASKS } from './test-utils';
+import { navigateToApp, addTask, expandSection, waitForAnimations, TEST_TASKS, expectSectionCounts, expectTaskVisible, completeTask, deleteTask } from './test-utils';
 
 test.describe('TaskFlow App - Restore Completed Tasks', () => {
   test.beforeEach(async ({ page }) => {
@@ -9,43 +9,41 @@ test.describe('TaskFlow App - Restore Completed Tasks', () => {
   test('should restore a single completed task to active state', async ({ page }) => {
     // Add and complete a task
     await addTask(page, TEST_TASKS.first);
-    await page.getByRole('checkbox').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Verify task is in completed section
-    await expect(page.getByText('Completed (1)')).toBeVisible();
-    await expect(page.getByText('Active (0)')).toBeVisible();
+    await expectSectionCounts(page, { completed: 1, active: 0 });
     
     // Expand completed section
     await expandSection(page, 'Completed', 1);
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.first);
     
     // Uncheck the completed task to restore it
     await page.getByRole('checkbox').click();
     await waitForAnimations(page);
     
     // Verify task is back in active section
-    await expect(page.getByText('Active (1)')).toBeVisible();
-    await expect(page.getByText('Completed (0)')).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
+    await expectSectionCounts(page, { active: 1, completed: 0 });
+    await expectTaskVisible(page, TEST_TASKS.first);
   });
 
   test('should handle multiple task completion and restoration', async ({ page }) => {
     // Add and complete one task
     await addTask(page, TEST_TASKS.first);
-    await page.getByRole('checkbox').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Verify completed
-    await expect(page.getByText('Completed (1)')).toBeVisible();
+    await expectSectionCounts(page, { completed: 1 });
     
     // Add and complete second task  
     await addTask(page, TEST_TASKS.second);
-    await page.getByRole('checkbox').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Verify both completed
-    await expect(page.getByText('Completed (2)')).toBeVisible();
+    await expectSectionCounts(page, { completed: 2 });
     
     // Restore one task
     await expandSection(page, 'Completed', 2);
@@ -53,28 +51,26 @@ test.describe('TaskFlow App - Restore Completed Tasks', () => {
     await waitForAnimations(page);
     
     // Verify one restored
-    await expect(page.getByText('Active (1)')).toBeVisible();
-    await expect(page.getByText('Completed (1)')).toBeVisible();
+    await expectSectionCounts(page, { active: 1, completed: 1 });
   });
 
   test('should maintain task visibility when restoring completed tasks', async ({ page }) => {
     // Add and complete one task
     await addTask(page, TEST_TASKS.first);
-    await page.getByRole('checkbox').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Verify completed
-    await expect(page.getByText('Completed (1)')).toBeVisible();
+    await expectSectionCounts(page, { completed: 1 });
     
     // Add second task (remains active)
     await addTask(page, TEST_TASKS.second);
     
     // Verify state: one active, one completed
-    await expect(page.getByText('Active (1)')).toBeVisible();
-    await expect(page.getByText('Completed (1)')).toBeVisible();
+    await expectSectionCounts(page, { active: 1, completed: 1 });
     
     // Verify second task is visible in active section
-    await expect(page.getByText(TEST_TASKS.second)).toBeVisible();
+    await expectTaskVisible(page, TEST_TASKS.second);
     
     // Expand completed section and restore the first task
     await expandSection(page, 'Completed', 1);
@@ -82,10 +78,9 @@ test.describe('TaskFlow App - Restore Completed Tasks', () => {
     await waitForAnimations(page);
     
     // Verify both tasks are now in active section
-    await expect(page.getByText('Active (2)')).toBeVisible();
-    await expect(page.getByText('Completed (0)')).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.first)).toBeVisible();
-    await expect(page.getByText(TEST_TASKS.second)).toBeVisible();
+    await expectSectionCounts(page, { active: 2, completed: 0 });
+    await expectTaskVisible(page, TEST_TASKS.first);
+    await expectTaskVisible(page, TEST_TASKS.second);
   });
 
   test('should preserve task content and state when restoring', async ({ page }) => {
@@ -94,20 +89,20 @@ test.describe('TaskFlow App - Restore Completed Tasks', () => {
     await addTask(page, taskContent);
     
     // Complete the task
-    await page.getByRole('checkbox').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Verify task is in completed section with correct content
     await expandSection(page, 'Completed', 1);
-    await expect(page.getByText(taskContent)).toBeVisible();
+    await expectTaskVisible(page, taskContent);
     
     // Restore the task
     await page.getByRole('checkbox').click();
     await waitForAnimations(page);
     
     // Verify task content is preserved in active section
-    await expect(page.getByText(taskContent)).toBeVisible();
-    await expect(page.getByText('Active (1)')).toBeVisible();
+    await expectTaskVisible(page, taskContent);
+    await expectSectionCounts(page, { active: 1 });
     
     // Verify checkbox is unchecked in active section
     await expect(page.getByRole('checkbox')).not.toBeChecked();
@@ -118,12 +113,11 @@ test.describe('TaskFlow App - Restore Completed Tasks', () => {
     await addTask(page, TEST_TASKS.animated);
     
     // Complete task
-    await page.getByRole('checkbox').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Verify completed
-    await expect(page.getByText('Completed (1)')).toBeVisible();
-    await expect(page.getByText('Active (0)')).toBeVisible();
+    await expectSectionCounts(page, { completed: 1, active: 0 });
     
     // Restore task
     await expandSection(page, 'Completed', 1);
@@ -131,35 +125,31 @@ test.describe('TaskFlow App - Restore Completed Tasks', () => {
     await waitForAnimations(page);
     
     // Verify restored
-    await expect(page.getByText('Active (1)')).toBeVisible();
-    await expect(page.getByText('Completed (0)')).toBeVisible();
+    await expectSectionCounts(page, { active: 1, completed: 0 });
     
     // Complete again
-    await page.getByRole('checkbox').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Verify final state
-    await expect(page.getByText('Completed (1)')).toBeVisible();
-    await expect(page.getByText('Active (0)')).toBeVisible();
+    await expectSectionCounts(page, { completed: 1, active: 0 });
   });
 
   test('should handle restoration mixed with other operations', async ({ page }) => {
     // Add and complete a task
     await addTask(page, TEST_TASKS.first);
-    await page.getByRole('checkbox').click();
+    await completeTask(page);
     await waitForAnimations(page);
     
     // Add another task
     await addTask(page, TEST_TASKS.second);
     
     // Delete the active task
-    await page.locator('[data-testid="delete-todo"]').click();
+    await deleteTask(page);
     await waitForAnimations(page);
     
     // We should have: Active (0), Completed (1), Deleted (1)
-    await expect(page.getByText('Active (0)')).toBeVisible();
-    await expect(page.getByText('Completed (1)')).toBeVisible();
-    await expect(page.getByText('Deleted (1)')).toBeVisible();
+    await expectSectionCounts(page, { active: 0, completed: 1, deleted: 1 });
     
     // Restore the completed task
     await expandSection(page, 'Completed', 1);

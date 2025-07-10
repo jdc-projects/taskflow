@@ -153,10 +153,11 @@ export async function completeTask(page: Page, taskIndex: number = 0) {
 }
 
 /**
- * Delete a task using the delete button in the active section
+ * Delete a task using the delete button in the specified section
  */
-export async function deleteTask(page: Page, taskIndex: number = 0) {
-  await page.locator('[data-testid="active-section"] [data-testid="delete-todo"]').nth(taskIndex).click();
+export async function deleteTask(page: Page, taskIndex: number = 0, section: 'active' | 'completed' = 'active') {
+  const sectionTestId = section === 'active' ? 'active-section' : 'completed-section';
+  await page.locator(`[data-testid="${sectionTestId}"] [data-testid="delete-todo"]`).nth(taskIndex).click();
 }
 
 /**
