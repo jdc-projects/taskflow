@@ -63,29 +63,11 @@ export function useCollapseStates(initialStates?: Partial<CollapseStates>) {
     setCollapseStates(prev => ({ ...prev, deleted: !prev.deleted }));
   }, []);
 
-  // Generic toggle function for any section
-  const toggleSection = useCallback((section: keyof CollapseStates) => {
-    setCollapseStates(prev => ({ ...prev, [section]: !prev[section] }));
-  }, []);
-
-  // Set specific section state
-  const setSectionState = useCallback((section: keyof CollapseStates, state: boolean) => {
-    setCollapseStates(prev => ({ ...prev, [section]: state }));
-  }, []);
-
-  // Reset all sections to default state
-  const resetToDefaults = useCallback(() => {
-    setCollapseStates(DEFAULT_COLLAPSE_STATES);
-  }, []);
-
   return {
     collapseStates,
     toggleActiveSection,
     toggleCompletedSection,
     toggleDeletedSection,
-    toggleSection,
-    setSectionState,
-    resetToDefaults,
     mounted
   };
 }

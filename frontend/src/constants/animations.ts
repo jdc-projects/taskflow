@@ -19,7 +19,7 @@ export const ANIMATION_DURATIONS = {
 /**
  * Convert seconds to milliseconds
  */
-export function secondsToMs(seconds: number): number {
+function secondsToMs(seconds: number): number {
   return seconds * 1000;
 }
 

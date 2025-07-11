@@ -2,12 +2,12 @@
  * Validation utilities for task input
  */
 
-export interface ValidationResult {
+interface ValidationResult {
   isValid: boolean;
   error?: string;
 }
 
-export const TASK_VALIDATION_RULES = {
+const TASK_VALIDATION_RULES = {
   MIN_LENGTH: 1,
   MAX_LENGTH: 500,
   MAX_LINES: 10,

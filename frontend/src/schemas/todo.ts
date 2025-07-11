@@ -16,11 +16,6 @@ export const TodoSchema = z.object({
 });
 
 /**
- * Schema for array of todos
- */
-export const TodoArraySchema = z.array(TodoSchema);
-
-/**
  * Type inference from schema
  */
 export type ValidatedTodo = z.infer<typeof TodoSchema>;
@@ -40,20 +35,6 @@ export function validateTodo(todo: unknown): { success: true; data: ValidatedTod
   }
 }
 
-/**
- * Validates an array of todos
- */
-export function validateTodoArray(todos: unknown): { success: true; data: ValidatedTodo[] } | { success: false; error: string } {
-  try {
-    const validated = TodoArraySchema.parse(todos);
-    return { success: true, data: validated };
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.issues.map(e => e.message).join(', ') };
-    }
-    return { success: false, error: 'Unknown validation error' };
-  }
-}
 
 /**
  * Safely validates and migrates todos from localStorage
