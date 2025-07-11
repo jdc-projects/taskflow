@@ -61,7 +61,7 @@ export function getTaskCheckbox(page: Page, index: number) {
 /**
  * Get the delete button for a task
  */
-export function getDeleteButton(page: Page, testId: string = 'delete-todo') {
+export function getDeleteButton(page: Page, testId: string = 'delete-task') {
   return page.locator(`[data-testid="${testId}"]`);
 }
 
@@ -69,14 +69,14 @@ export function getDeleteButton(page: Page, testId: string = 'delete-todo') {
  * Get the restore button for a deleted task
  */
 export function getRestoreButton(page: Page) {
-  return page.locator('[data-testid="restore-todo"]');
+  return page.locator('[data-testid="restore-task"]');
 }
 
 /**
  * Get the permanent delete button for a deleted task
  */
 export function getPermanentDeleteButton(page: Page) {
-  return page.locator('[data-testid="permanent-delete-todo"]');
+  return page.locator('[data-testid="permanent-delete-task"]');
 }
 
 /**
@@ -157,21 +157,21 @@ export async function completeTask(page: Page, taskIndex: number = 0) {
  */
 export async function deleteTask(page: Page, taskIndex: number = 0, section: 'active' | 'completed' = 'active') {
   const sectionTestId = section === 'active' ? 'active-section' : 'completed-section';
-  await page.locator(`[data-testid="${sectionTestId}"] [data-testid="delete-todo"]`).nth(taskIndex).click();
+  await page.locator(`[data-testid="${sectionTestId}"] [data-testid="delete-task"]`).nth(taskIndex).click();
 }
 
 /**
  * Restore a task from the deleted section
  */
 export async function restoreTask(page: Page, taskIndex: number = 0) {
-  await page.locator('[data-testid="deleted-section"] [data-testid="restore-todo"]').nth(taskIndex).click();
+  await page.locator('[data-testid="deleted-section"] [data-testid="restore-task"]').nth(taskIndex).click();
 }
 
 /**
  * Permanently delete a task from the deleted section
  */
 export async function permanentDeleteTask(page: Page, taskIndex: number = 0) {
-  await page.locator('[data-testid="deleted-section"] [data-testid="permanent-delete-todo"]').nth(taskIndex).click();
+  await page.locator('[data-testid="deleted-section"] [data-testid="permanent-delete-task"]').nth(taskIndex).click();
 }
 
 /**

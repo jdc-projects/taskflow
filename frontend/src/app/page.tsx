@@ -3,10 +3,10 @@
 import { useMemo, useCallback } from 'react';
 import { Container, Stack } from '@mantine/core';
 import { LayoutGroup } from 'framer-motion';
-import { useTodos } from '@/hooks/useTodos';
+import { useTasks } from '@/hooks/useTasks';
 import { useCollapseStates } from '@/hooks/useCollapseStates';
 import { useFocusManagement } from '@/hooks/useFocusManagement';
-import { AddTodo } from '@/components/AddTodo';
+import { AddTask } from '@/components/AddTask';
 import { TaskSection } from '@/components/TaskSection';
 import { AppHeader } from '@/components/AppHeader';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -14,14 +14,14 @@ import { ANIMATION_DURATIONS } from '@/constants/animations';
 
 export default function Home() {
   const { 
-    todos, 
-    addTodo, 
-    toggleTodo, 
-    deleteTodo, 
-    restoreTodo, 
-    permanentDeleteTodo, 
+    tasks, 
+    addTask, 
+    toggleTask, 
+    deleteTask, 
+    restoreTask, 
+    permanentDeleteTask, 
     permanentDeleteAllDeleted
-  } = useTodos();
+  } = useTasks();
   
   const {
     collapseStates,
@@ -35,62 +35,62 @@ export default function Home() {
 
 
   // Enhanced toggle functions with focus management
-  const handleToggleTodo = useCallback((id: string) => {
+  const handleToggleTask = useCallback((id: string) => {
     focusManager.storeFocus();
-    toggleTodo(id);
+    toggleTask(id);
     focusManager.scheduleDelayedFocus(() => {
       focusManager.restoreFocus();
     }, ANIMATION_DURATIONS.TASK_TRANSITION);
-  }, [toggleTodo, focusManager]);
+  }, [toggleTask, focusManager]);
 
-  const handleDeleteTodo = useCallback((id: string) => {
+  const handleDeleteTask = useCallback((id: string) => {
     focusManager.storeFocus();
-    deleteTodo(id);
+    deleteTask(id);
     focusManager.scheduleDelayedFocus(() => {
       focusManager.focusOnSection('deleted-section');
     }, ANIMATION_DURATIONS.TASK_TRANSITION);
-  }, [deleteTodo, focusManager]);
+  }, [deleteTask, focusManager]);
 
-  const handleRestoreTodo = useCallback((id: string) => {
+  const handleRestoreTask = useCallback((id: string) => {
     focusManager.storeFocus();
-    restoreTodo(id);
+    restoreTask(id);
     focusManager.scheduleDelayedFocus(() => {
       focusManager.focusOnSection('active-section');
     }, ANIMATION_DURATIONS.TASK_TRANSITION);
-  }, [restoreTodo, focusManager]);
+  }, [restoreTask, focusManager]);
 
-  const handlePermanentDeleteTodo = useCallback((id: string) => {
+  const handlePermanentDeleteTask = useCallback((id: string) => {
     focusManager.storeFocus();
-    permanentDeleteTodo(id);
+    permanentDeleteTask(id);
     focusManager.scheduleDelayedFocus(() => {
       focusManager.focusOnSection('deleted-section');
     }, ANIMATION_DURATIONS.TASK_TRANSITION);
-  }, [permanentDeleteTodo, focusManager]);
+  }, [permanentDeleteTask, focusManager]);
 
   const handlePermanentDeleteAllDeleted = useCallback(() => {
     focusManager.storeFocus();
     permanentDeleteAllDeleted();
     focusManager.scheduleDelayedFocus(() => {
-      focusManager.focusOnAddTodo();
+      focusManager.focusOnAddTask();
     }, ANIMATION_DURATIONS.TASK_TRANSITION);
   }, [permanentDeleteAllDeleted, focusManager]);
 
   // Memoized section computation for performance
   const incompleteTasks = useMemo(() => 
-    todos.filter(todo => !todo.completed && !todo.deleted), 
-    [todos]
+    tasks.filter(task => !task.completed && !task.deleted), 
+    [tasks]
   );
   
   const completedTasks = useMemo(() => 
-    todos.filter(todo => todo.completed && !todo.deleted)
+    tasks.filter(task => task.completed && !task.deleted)
       .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0)),
-    [todos]
+    [tasks]
   );
   
   const deletedTasks = useMemo(() => 
-    todos.filter(todo => todo.deleted)
+    tasks.filter(task => task.deleted)
       .sort((a, b) => (b.deletedAt || 0) - (a.deletedAt || 0)),
-    [todos]
+    [tasks]
   );
   
 
@@ -105,7 +105,7 @@ export default function Home() {
           <AppHeader />
           
           <ErrorBoundary>
-            <AddTodo onAdd={addTodo} />
+            <AddTask onAdd={addTask} />
           </ErrorBoundary>
           
           <LayoutGroup>
@@ -116,10 +116,10 @@ export default function Home() {
                 tasks={incompleteTasks}
                 isExpanded={collapseStates.active}
                 onToggleExpanded={toggleActiveSection}
-                onToggleTodo={handleToggleTodo}
-                onDeleteTodo={handleDeleteTodo}
-                onRestoreTodo={handleRestoreTodo}
-                onPermanentDeleteTodo={handlePermanentDeleteTodo}
+                onToggleTask={handleToggleTask}
+                onDeleteTask={handleDeleteTask}
+                onRestoreTask={handleRestoreTask}
+                onPermanentDeleteTask={handlePermanentDeleteTask}
                 animationDuration={ANIMATION_DURATIONS.TASK_TRANSITION}
                 testId="active-section"
               />
@@ -130,10 +130,10 @@ export default function Home() {
                 tasks={completedTasks}
                 isExpanded={collapseStates.completed}
                 onToggleExpanded={toggleCompletedSection}
-                onToggleTodo={handleToggleTodo}
-                onDeleteTodo={handleDeleteTodo}
-                onRestoreTodo={handleRestoreTodo}
-                onPermanentDeleteTodo={handlePermanentDeleteTodo}
+                onToggleTask={handleToggleTask}
+                onDeleteTask={handleDeleteTask}
+                onRestoreTask={handleRestoreTask}
+                onPermanentDeleteTask={handlePermanentDeleteTask}
                 animationDuration={ANIMATION_DURATIONS.TASK_TRANSITION}
                 testId="completed-section"
               />
@@ -144,10 +144,10 @@ export default function Home() {
                 tasks={deletedTasks}
                 isExpanded={collapseStates.deleted}
                 onToggleExpanded={toggleDeletedSection}
-                onToggleTodo={handleToggleTodo}
-                onDeleteTodo={handleDeleteTodo}
-                onRestoreTodo={handleRestoreTodo}
-                onPermanentDeleteTodo={handlePermanentDeleteTodo}
+                onToggleTask={handleToggleTask}
+                onDeleteTask={handleDeleteTask}
+                onRestoreTask={handleRestoreTask}
+                onPermanentDeleteTask={handlePermanentDeleteTask}
                 onPermanentDeleteAll={handlePermanentDeleteAllDeleted}
                 animationDuration={ANIMATION_DURATIONS.TASK_TRANSITION}
                 testId="deleted-section"

@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { TextInput, Button, Group } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
 
-interface AddTodoProps {
+interface AddTaskProps {
   onAdd: (text: string) => void;
 }
 
-export function AddTodo({ onAdd }: AddTodoProps) {
+export function AddTask({ onAdd }: AddTaskProps) {
   const [text, setText] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {

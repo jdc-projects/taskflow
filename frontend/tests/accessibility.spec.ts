@@ -22,7 +22,7 @@ test.describe('TaskFlow App - Accessibility', () => {
     
     // Tab 3: First task delete button
     await page.keyboard.press('Tab'); 
-    await expect(page.locator('[data-testid="delete-todo"]').first()).toBeFocused();
+    await expect(page.locator('[data-testid="delete-task"]').first()).toBeFocused();
     
     // Tab 4: Second task checkbox
     await page.keyboard.press('Tab'); 
@@ -30,7 +30,7 @@ test.describe('TaskFlow App - Accessibility', () => {
     
     // Tab 5: Second task delete button
     await page.keyboard.press('Tab'); 
-    await expect(page.locator('[data-testid="delete-todo"]').nth(1)).toBeFocused();
+    await expect(page.locator('[data-testid="delete-task"]').nth(1)).toBeFocused();
   });
 
   test('should allow adding tasks using keyboard only', async ({ page }) => {
@@ -85,7 +85,7 @@ test.describe('TaskFlow App - Accessibility', () => {
     await page.keyboard.press('Tab'); // Delete button
     
     // Verify delete button is focused
-    await expect(page.locator('[data-testid="delete-todo"]').first()).toBeFocused();
+    await expect(page.locator('[data-testid="delete-task"]').first()).toBeFocused();
     
     // Press Enter or Space to delete
     await page.keyboard.press('Enter');
@@ -127,7 +127,7 @@ test.describe('TaskFlow App - Accessibility', () => {
     await waitForAnimations(page);
     
     // Tab to the restore button
-    await page.locator('[data-testid="restore-todo"]').focus();
+    await page.locator('[data-testid="restore-task"]').focus();
     
     // Press Enter to restore
     await page.keyboard.press('Enter');
@@ -149,7 +149,7 @@ test.describe('TaskFlow App - Accessibility', () => {
     await waitForAnimations(page);
     
     // Tab to the permanent delete button
-    await page.locator('[data-testid="permanent-delete-todo"]').focus();
+    await page.locator('[data-testid="permanent-delete-task"]').focus();
     
     // Press Enter to permanently delete
     await page.keyboard.press('Enter');
@@ -167,7 +167,7 @@ test.describe('TaskFlow App - Accessibility', () => {
     // Check that interactive elements have proper accessibility attributes
     await expect(page.getByRole('button', { name: 'Add' })).toBeVisible();
     await expect(page.getByRole('checkbox')).toHaveCount(1);
-    await expect(page.locator('[data-testid="delete-todo"]')).toBeVisible();
+    await expect(page.locator('[data-testid="delete-task"]')).toBeVisible();
     
     // Check sections have proper test ids for accessibility
     await expect(page.locator('[data-testid="active-section"]')).toBeVisible();

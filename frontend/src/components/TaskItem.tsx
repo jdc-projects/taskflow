@@ -1,59 +1,59 @@
 import { Checkbox, Group, Text, ActionIcon } from '@mantine/core';
 import { IconTrash, IconRestore, IconTrashX } from '@tabler/icons-react';
-import { Todo } from '@/types/todo';
+import { Task } from '@/types/task';
 
-interface TodoItemProps {
-  todo: Todo;
+interface TaskItemProps {
+  task: Task;
   onToggle?: (id: string) => void;
   onDelete?: (id: string) => void;
   onRestore?: (id: string) => void;
   onPermanentDelete?: (id: string) => void;
 }
 
-export function TodoItem({ 
-  todo, 
+export function TaskItem({ 
+  task, 
   onToggle, 
   onDelete, 
   onRestore, 
   onPermanentDelete 
-}: TodoItemProps) {
+}: TaskItemProps) {
   return (
-    <Group justify="space-between" align="center" py="xs" data-todo-id={todo.id} data-testid="todo-item">
+    <Group justify="space-between" align="center" py="xs" data-task-id={task.id} data-testid="task-item">
       <Group align="center">
         <Checkbox
-          checked={todo.completed}
-          onChange={() => onToggle?.(todo.id)}
+          checked={task.completed}
+          onChange={() => onToggle?.(task.id)}
           size="sm"
-          disabled={todo.deleted}
+          disabled={task.deleted}
         />
         <Text
           size="sm"
-          td={todo.completed ? 'line-through' : 'none'}
-          c={todo.deleted ? 'red' : todo.completed ? 'dimmed' : 'bright'}
+          td={task.completed ? 'line-through' : 'none'}
+          c={task.deleted ? 'red' : task.completed ? 'dimmed' : 'bright'}
           fw={500}
         >
-          {todo.text}
+          {task.text}
         </Text>
       </Group>
       
       <Group gap="xs">
-        {todo.deleted ? (
+        {task.deleted ? (
           <>
             <ActionIcon
               variant="subtle"
               color="blue"
-              onClick={() => onRestore?.(todo.id)}
+              onClick={() => onRestore?.(task.id)}
               size="sm"
-              data-testid="restore-todo"
+              data-testid="restore-task"
             >
               <IconRestore size={16} />
             </ActionIcon>
             <ActionIcon
               variant="subtle"
               color="red"
-              onClick={() => onPermanentDelete?.(todo.id)}
+              onClick={() => onPermanentDelete?.(task.id)}
               size="sm"
-              data-testid="permanent-delete-todo"
+              data-testid="permanent-delete-task"
             >
               <IconTrashX size={16} />
             </ActionIcon>
@@ -62,9 +62,9 @@ export function TodoItem({
           <ActionIcon
             variant="subtle"
             color="red"
-            onClick={() => onDelete?.(todo.id)}
+            onClick={() => onDelete?.(task.id)}
             size="sm"
-            data-testid="delete-todo"
+            data-testid="delete-task"
           >
             <IconTrash size={16} />
           </ActionIcon>

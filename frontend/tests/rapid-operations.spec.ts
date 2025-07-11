@@ -160,9 +160,9 @@ test.describe('TaskFlow App - Rapid Operations and Race Conditions', () => {
     await page.waitForTimeout(200);
     
     // Rapidly restore tasks
-    const restoreButtons = await page.locator('[data-testid="restore-todo"]').count();
+    const restoreButtons = await page.locator('[data-testid="restore-task"]').count();
     for (let i = 0; i < restoreButtons; i++) {
-      await page.locator('[data-testid="restore-todo"]').first().click();
+      await page.locator('[data-testid="restore-task"]').first().click();
       await page.waitForTimeout(50); // Small delay to prevent UI issues
     }
     

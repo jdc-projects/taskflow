@@ -6,39 +6,39 @@ export interface FocusManager {
   storeFocus: () => void;
   // Restore focus to a similar element after an operation
   restoreFocus: () => void;
-  // Focus on a specific todo item by ID
-  focusOnTodo: (todoId: string) => void;
+  // Focus on a specific task item by ID
+  focusOnTask: (taskId: string) => void;
   // Focus on the next available element in a section
   focusOnSection: (sectionId: string, fallbackToHeader?: boolean) => void;
-  // Focus on the add todo input
-  focusOnAddTodo: () => void;
+  // Focus on the add task input
+  focusOnAddTask: () => void;
   // Schedule focus action with animation delay (skips in test environment)
   scheduleDelayedFocus: (action: () => void, animationDuration: number) => void;
 }
 
 export function useFocusManagement(): FocusManager {
   const lastFocusedElement = useRef<HTMLElement | null>(null);
-  const lastFocusedTodoId = useRef<string | null>(null);
+  const lastFocusedTaskId = useRef<string | null>(null);
 
   const storeFocus = useCallback(() => {
     const activeElement = document.activeElement as HTMLElement;
     lastFocusedElement.current = activeElement;
     
-    // If focused on a todo item, store its ID for later restoration
-    const todoItem = activeElement.closest('[data-todo-id]');
-    if (todoItem) {
-      lastFocusedTodoId.current = todoItem.getAttribute('data-todo-id');
+    // If focused on a task item, store its ID for later restoration
+    const taskItem = activeElement.closest('[data-task-id]');
+    if (taskItem) {
+      lastFocusedTaskId.current = taskItem.getAttribute('data-task-id');
     } else {
-      lastFocusedTodoId.current = null;
+      lastFocusedTaskId.current = null;
     }
   }, []);
 
   const restoreFocus = useCallback(() => {
-    // First try to restore focus to the same todo item if it still exists
-    if (lastFocusedTodoId.current) {
-      const todoElement = document.querySelector(`[data-todo-id="${lastFocusedTodoId.current}"]`);
-      if (todoElement) {
-        const focusableElement = todoElement.querySelector('input, button, [tabindex]:not([tabindex="-1"])') as HTMLElement;
+    // First try to restore focus to the same task item if it still exists
+    if (lastFocusedTaskId.current) {
+      const taskElement = document.querySelector(`[data-task-id="${lastFocusedTaskId.current}"]`);
+      if (taskElement) {
+        const focusableElement = taskElement.querySelector('input, button, [tabindex]:not([tabindex="-1"])') as HTMLElement;
         if (focusableElement) {
           focusableElement.focus();
           return;
@@ -56,17 +56,17 @@ export function useFocusManagement(): FocusManager {
       }
     }
 
-    // Final fallback: focus on add todo input
-    const addTodoInput = document.querySelector('input[placeholder*="Add"], input[placeholder*="task"], input[type="text"]') as HTMLElement;
-    if (addTodoInput) {
-      addTodoInput.focus();
+    // Final fallback: focus on add task input
+    const addTaskInput = document.querySelector('input[placeholder*="Add"], input[placeholder*="task"], input[type="text"]') as HTMLElement;
+    if (addTaskInput) {
+      addTaskInput.focus();
     }
   }, []);
 
-  const focusOnTodo = useCallback((todoId: string) => {
-    const todoElement = document.querySelector(`[data-todo-id="${todoId}"]`);
-    if (todoElement) {
-      const focusableElement = todoElement.querySelector('input, button, [tabindex]:not([tabindex="-1"])') as HTMLElement;
+  const focusOnTask = useCallback((taskId: string) => {
+    const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (taskElement) {
+      const focusableElement = taskElement.querySelector('input, button, [tabindex]:not([tabindex="-1"])') as HTMLElement;
       if (focusableElement) {
         focusableElement.focus();
       }
@@ -93,17 +93,17 @@ export function useFocusManagement(): FocusManager {
       }
     }
 
-    // Final fallback: focus on add todo input
-    const addTodoInput = document.querySelector('input[placeholder*="Add"], input[placeholder*="task"], input[type="text"]') as HTMLElement;
-    if (addTodoInput) {
-      addTodoInput.focus();
+    // Final fallback: focus on add task input
+    const addTaskInput = document.querySelector('input[placeholder*="Add"], input[placeholder*="task"], input[type="text"]') as HTMLElement;
+    if (addTaskInput) {
+      addTaskInput.focus();
     }
   }, []);
 
-  const focusOnAddTodo = useCallback(() => {
-    const addTodoInput = document.querySelector('input[placeholder*="Add"], input[placeholder*="task"], input[type="text"]') as HTMLElement;
-    if (addTodoInput) {
-      addTodoInput.focus();
+  const focusOnAddTask = useCallback(() => {
+    const addTaskInput = document.querySelector('input[placeholder*="Add"], input[placeholder*="task"], input[type="text"]') as HTMLElement;
+    if (addTaskInput) {
+      addTaskInput.focus();
     }
   }, []);
 
@@ -117,9 +117,9 @@ export function useFocusManagement(): FocusManager {
   return {
     storeFocus,
     restoreFocus,
-    focusOnTodo,
+    focusOnTask,
     focusOnSection,
-    focusOnAddTodo,
+    focusOnAddTask,
     scheduleDelayedFocus
   };
 }

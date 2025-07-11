@@ -2,20 +2,20 @@
 
 import { Paper, Stack, Divider } from '@mantine/core';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Todo } from '@/types/todo';
-import { TodoItem } from './TodoItem';
+import { Task } from '@/types/task';
+import { TaskItem } from './TaskItem';
 import { CollapsibleSection } from './CollapsibleSection';
 import ErrorBoundary from './ErrorBoundary';
 
 interface TaskSectionProps {
   title: string;
-  tasks: Todo[];
+  tasks: Task[];
   isExpanded: boolean;
   onToggleExpanded: () => void;
-  onToggleTodo: (id: string) => void;
-  onDeleteTodo: (id: string) => void;
-  onRestoreTodo: (id: string) => void;
-  onPermanentDeleteTodo: (id: string) => void;
+  onToggleTask: (id: string) => void;
+  onDeleteTask: (id: string) => void;
+  onRestoreTask: (id: string) => void;
+  onPermanentDeleteTask: (id: string) => void;
   onPermanentDeleteAll?: () => void;
   animationDuration: number;
   testId: string;
@@ -26,10 +26,10 @@ export function TaskSection({
   tasks,
   isExpanded,
   onToggleExpanded,
-  onToggleTodo,
-  onDeleteTodo,
-  onRestoreTodo,
-  onPermanentDeleteTodo,
+  onToggleTask,
+  onDeleteTask,
+  onRestoreTask,
+  onPermanentDeleteTask,
   onPermanentDeleteAll,
   animationDuration,
   testId
@@ -64,18 +64,18 @@ export function TaskSection({
           >
             <Stack gap={0}>
               <AnimatePresence>
-                {tasks.map((todo, index) => (
+                {tasks.map((task, index) => (
                   <motion.div
-                    key={todo.id}
-                    layoutId={todo.id}
+                    key={task.id}
+                    layoutId={task.id}
                     {...itemAnimation}
                   >
-                    <TodoItem
-                      todo={todo}
-                      onToggle={onToggleTodo}
-                      onDelete={onDeleteTodo}
-                      onRestore={onRestoreTodo}
-                      onPermanentDelete={onPermanentDeleteTodo}
+                    <TaskItem
+                      task={task}
+                      onToggle={onToggleTask}
+                      onDelete={onDeleteTask}
+                      onRestore={onRestoreTask}
+                      onPermanentDelete={onPermanentDeleteTask}
                     />
                     {index < tasks.length - 1 && <Divider my="sm" />}
                   </motion.div>

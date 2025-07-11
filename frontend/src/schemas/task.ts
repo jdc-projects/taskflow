@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 /**
- * Zod schema for Todo validation
+ * Zod schema for Task validation
  */
-export const TodoSchema = z.object({
-  id: z.string().uuid('Invalid todo ID format'),
+export const TaskSchema = z.object({
+  id: z.string().uuid('Invalid task ID format'),
   text: z.string()
     .min(1, 'Task text cannot be empty')
     .max(500, 'Task text cannot exceed 500 characters')
@@ -18,14 +18,14 @@ export const TodoSchema = z.object({
 /**
  * Type inference from schema
  */
-export type ValidatedTodo = z.infer<typeof TodoSchema>;
+export type ValidatedTask = z.infer<typeof TaskSchema>;
 
 /**
- * Validates a single todo object
+ * Validates a single task object
  */
-export function validateTodo(todo: unknown): { success: true; data: ValidatedTodo } | { success: false; error: string } {
+export function validateTask(task: unknown): { success: true; data: ValidatedTask } | { success: false; error: string } {
   try {
-    const validated = TodoSchema.parse(todo);
+    const validated = TaskSchema.parse(task);
     return { success: true, data: validated };
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -37,27 +37,27 @@ export function validateTodo(todo: unknown): { success: true; data: ValidatedTod
 
 
 /**
- * Safely validates and migrates todos from localStorage
+ * Safely validates and migrates tasks from localStorage
  */
-export function validateAndMigrateTodos(stored: unknown): ValidatedTodo[] {
+export function validateAndMigrateTasks(stored: unknown): ValidatedTask[] {
   if (!Array.isArray(stored)) {
-    console.warn('Stored todos is not an array, returning empty array');
+    console.warn('Stored tasks is not an array, returning empty array');
     return [];
   }
 
-  const validTodos: ValidatedTodo[] = [];
+  const validTasks: ValidatedTask[] = [];
   
   for (const item of stored) {
-    const validation = validateTodo(item);
+    const validation = validateTask(item);
     if (validation.success) {
-      validTodos.push(validation.data);
+      validTasks.push(validation.data);
     } else {
-      console.warn('Invalid todo item found and skipped:', validation.error, item);
+      console.warn('Invalid task item found and skipped:', validation.error, item);
       
-      // Attempt to salvage the todo if it has basic structure
+      // Attempt to salvage the task if it has basic structure
       if (typeof item === 'object' && item !== null && 'text' in item) {
         try {
-          const salvaged: ValidatedTodo = {
+          const salvaged: ValidatedTask = {
             id: 'id' in item && typeof item.id === 'string' ? item.id : crypto.randomUUID(),
             text: typeof item.text === 'string' ? item.text.trim() : 'Recovered task',
             completed: 'completed' in item ? Boolean(item.completed) : false,
@@ -67,17 +67,17 @@ export function validateAndMigrateTodos(stored: unknown): ValidatedTodo[] {
           };
           
           // Validate the salvaged version
-          const salvageValidation = validateTodo(salvaged);
+          const salvageValidation = validateTask(salvaged);
           if (salvageValidation.success) {
-            validTodos.push(salvageValidation.data);
-            console.log('Successfully salvaged todo:', salvageValidation.data);
+            validTasks.push(salvageValidation.data);
+            console.log('Successfully salvaged task:', salvageValidation.data);
           }
         } catch (error) {
-          console.warn('Failed to salvage todo item:', error);
+          console.warn('Failed to salvage task item:', error);
         }
       }
     }
   }
 
-  return validTodos;
+  return validTasks;
 }

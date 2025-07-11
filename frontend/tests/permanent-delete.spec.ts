@@ -54,7 +54,7 @@ test.describe('TaskFlow App - Permanent Delete Functionality', () => {
     await waitForAnimations(page);
     
     // Delete both tasks
-    const deleteButtons = await page.locator('[data-testid="delete-todo"]').all();
+    const deleteButtons = await page.locator('[data-testid="delete-task"]').all();
     await deleteButtons[0].click();
     await waitForAnimations(page);
     await deleteButtons[1].click();
