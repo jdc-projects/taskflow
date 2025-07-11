@@ -226,4 +226,44 @@ test.describe('TaskFlow App - Accessibility', () => {
     // The focus should cycle through elements or move to browser chrome
     await expect(page.locator('body')).toBeVisible(); // Basic check that page is still responsive
   });
+
+  test('should provide accessible GitHub link', async ({ page }) => {
+    const githubLink = page.getByTestId('github-link');
+    
+    // Check that link is accessible via keyboard
+    await githubLink.focus();
+    await expect(githubLink).toBeFocused();
+    
+    // Check ARIA attributes
+    await expect(githubLink).toHaveAttribute('aria-label', 'View source on GitHub');
+    
+    // Check that it's a proper link
+    await expect(githubLink).toHaveAttribute('href', 'https://github.com/jdc-projects/taskflow');
+    
+    // Check that it opens in new tab for security
+    await expect(githubLink).toHaveAttribute('target', '_blank');
+    await expect(githubLink).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  test('should include GitHub link in tab order', async ({ page }) => {
+    // Start from beginning and tab to find GitHub link
+    let tabCount = 0;
+    const maxTabs = 5; // Reasonable limit to find header elements
+    
+    while (tabCount < maxTabs) {
+      await page.keyboard.press('Tab');
+      tabCount++;
+      
+      const focused = page.locator(':focus');
+      const testId = await focused.getAttribute('data-testid').catch(() => null);
+      
+      if (testId === 'github-link') {
+        await expect(focused).toBeFocused();
+        return; // Test passed
+      }
+    }
+    
+    // If we get here, the GitHub link wasn't found in tab order
+    throw new Error('GitHub link not found in tab order within expected range');
+  });
 });

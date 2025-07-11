@@ -10,6 +10,21 @@ test.describe('TaskFlow App - Basic Functionality', () => {
     await expect(page.getByRole('heading', { name: 'TaskFlow' })).toBeVisible();
   });
 
+  test('should display GitHub link with correct URL', async ({ page }) => {
+    const githubLink = page.getByTestId('github-link');
+    await expect(githubLink).toBeVisible();
+    await expect(githubLink).toHaveAttribute('href', 'https://github.com/jdc-projects/taskflow');
+    await expect(githubLink).toHaveAttribute('target', '_blank');
+    await expect(githubLink).toHaveAttribute('rel', 'noopener noreferrer');
+    await expect(githubLink).toHaveAttribute('aria-label', 'View source on GitHub');
+  });
+
+  test('should display color scheme toggle button', async ({ page }) => {
+    const colorSchemeToggle = page.getByTestId('color-scheme-toggle');
+    await expect(colorSchemeToggle).toBeVisible();
+    await expect(colorSchemeToggle).toHaveAttribute('aria-label', 'Toggle color scheme');
+  });
+
   test('should add a new task', async ({ page }) => {
     await addTask(page, TEST_TASKS.simple);
     
